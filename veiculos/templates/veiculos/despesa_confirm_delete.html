@@ -1,0 +1,13 @@
+{% extends 'veiculos/base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-8">
+    <h2 class="text-2xl font-bold mb-4">Confirmar Exclusão</h2>
+    <p class="mb-6">Tem certeza que deseja excluir esta despesa?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger mr-2">Sim, excluir</button>
+        <a href="{% url 'veiculo_detalhe' despesa.veiculo.pk %}" class="btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

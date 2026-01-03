@@ -1,0 +1,58 @@
+{% extends 'veiculos/base.html' %}
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold">Detalhes da Venda</h1>
+    <a href="{% url 'venda_lista' %}" class="text-blue-600 hover:underline mt-2 inline-block">← Voltar para lista</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Informações da Venda</h2>
+        <div class="space-y-3">
+            <div><span class="text-gray-600">Data:</span> <span class="font-medium">{{ venda.data_venda|date:"d/m/Y" }}</span></div>
+            <div><span class="text-gray-600">Cliente:</span> <span class="font-medium">{{ venda.cliente.nome }}</span></div>
+            <div><span class="text-gray-600">Forma de Pagamento:</span> <span class="font-medium">{{ venda.forma_pagamento.nome }}</span></div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Veículo Vendido</h2>
+        <div class="space-y-3">
+            <div><span class="text-gray-600">Veículo:</span> <span class="font-medium">{{ venda.veiculo }}</span></div>
+            <div><span class="text-gray-600">Placa:</span> <span class="font-medium">{{ venda.veiculo.placa }}</span></div>
+            <a href="{% url 'veiculo_detalhe' venda.veiculo.pk %}" class="text-blue-600 hover:underline text-sm">Ver detalhes do veículo →</a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+        <h2 class="text-xl font-semibold mb-4">Valores</h2>
+        <div class="space-y-3">
+            <div class="flex justify-between border-b pb-2">
+                <span class="text-gray-600">Valor de Venda:</span>
+                <span class="font-semibold text-green-600">R$ {{ venda.valor_venda|floatformat:2 }}</span>
+            </div>
+            {% if venda.veiculo_entrada %}
+            <div class="flex justify-between border-b pb-2">
+                <span class="text-gray-600">Veículo de Entrada:</span>
+                <span class="font-medium">{{ venda.veiculo_entrada }}</span>
+            </div>
+            {% endif %}
+            <div class="flex justify-between border-b pb-2">
+                <span class="text-gray-600">Valor de Entrada:</span>
+                <span class="font-semibold text-orange-600">R$ {{ venda.valor_entrada|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between pt-2">
+                <span class="text-lg font-bold">Valor Final:</span>
+                <span class="text-xl font-bold text-blue-600">R$ {{ venda.valor_final|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if venda.observacoes %}
+    <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+        <h2 class="text-xl font-semibold mb-4">Observações</h2>
+        <p class="text-gray-700">{{ venda.observacoes }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

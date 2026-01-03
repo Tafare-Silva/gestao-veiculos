@@ -1,0 +1,36 @@
+{% extends 'veiculos/base.html' %}
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <h1 class="text-3xl font-bold">Formas de Pagamento</h1>
+    <a href="{% url 'forma_pagamento_nova' %}" class="btn-primary">+ Nova Forma</a>
+</div>
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    {% if formas %}
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            {% for forma in formas %}
+            <tr>
+                <td class="px-6 py-4 text-sm font-medium">{{ forma.nome }}</td>
+                <td class="px-6 py-4 text-sm">
+                    <span class="px-2 py-1 text-xs rounded-full {% if forma.ativo %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if forma.ativo %}Ativo{% else %}Inativo{% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-12">
+        <p class="text-gray-500">Nenhuma forma de pagamento cadastrada.</p>
+        <a href="{% url 'forma_pagamento_nova' %}" class="btn-primary mt-4 inline-block">Cadastrar Primeira Forma</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

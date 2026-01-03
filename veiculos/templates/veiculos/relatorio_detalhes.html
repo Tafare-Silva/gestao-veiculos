@@ -1,0 +1,124 @@
+<div class="space-y-4">
+    <!-- Informações Principais -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Cliente -->
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
+            <h4 class="font-semibold text-gray-900 mb-2 text-sm sm:text-base">👤 Cliente</h4>
+            <p class="text-sm text-gray-700">{{ resultado.venda.cliente.nome }}</p>
+            {% if resultado.venda.cliente.telefone %}
+            <p class="text-xs text-gray-500 mt-1">📞 {{ resultado.venda.cliente.telefone }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Veículo de Entrada -->
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
+            <h4 class="font-semibold text-gray-900 mb-2 text-sm sm:text-base">🔄 Veículo de Entrada</h4>
+            {% if resultado.tem_entrada %}
+                <p class="text-sm text-gray-700">{{ resultado.venda.veiculo_entrada }}</p>
+                <p class="text-sm font-semibold text-orange-600 mt-1">R$ {{ resultado.venda.valor_entrada|floatformat:2 }}</p>
+                <p class="text-xs text-gray-500 mt-1">Cliente pagou: R$ {{ resultado.venda.valor_final|floatformat:2 }}</p>
+            {% else %}
+                <p class="text-sm text-gray-500">Sem troca</p>
+                <p class="text-xs text-gray-400 mt-1">Pagamento integral</p>
+            {% endif %}
+        </div>
+
+        <!-- Forma de Pagamento -->
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
+            <h4 class="font-semibold text-gray-900 mb-2 text-sm sm:text-base">💳 Pagamento</h4>
+            <p class="text-sm text-gray-700">{{ resultado.venda.forma_pagamento.nome }}</p>
+            {% if resultado.venda.observacoes %}
+            <p class="text-xs text-gray-500 mt-2">{{ resultado.venda.observacoes|truncatewords:15 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Despesas -->
+    <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
+        <h4 class="font-semibold text-gray-900 mb-3 text-sm sm:text-base">💰 Despesas ({{ resultado.despesas_list.count }})</h4>
+        {% if resultado.despesas_list %}
+            <!-- Versão Mobile - Cards -->
+            <div class="lg:hidden space-y-2">
+                {% for despesa in resultado.despesas_list %}
+                <div class="bg-gray-50 p-3 rounded border text-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="font-semibold text-gray-900">{{ despesa.tipo.nome }}</div>
+                        <div class="font-bold text-red-600">R$ {{ despesa.valor|floatformat:2 }}</div>
+                    </div>
+                    {% if despesa.fornecedor %}
+                    <div class="text-xs text-gray-600">Fornecedor: {{ despesa.fornecedor }}</div>
+                    {% endif %}
+                    {% if despesa.descricao %}
+                    <div class="text-xs text-gray-600 mt-1">{{ despesa.descricao|truncatewords:10 }}</div>
+                    {% endif %}
+                    <div class="text-xs text-gray-500 mt-1">{{ despesa.data_despesa|date:"d/m/Y" }}</div>
+                </div>
+                {% endfor %}
+                <div class="bg-blue-50 p-3 rounded border-2 border-blue-300 flex justify-between items-center">
+                    <div class="font-semibold">Total:</div>
+                    <div class="font-bold text-lg text-red-600">R$ {{ resultado.despesas|floatformat:2 }}</div>
+                </div>
+            </div>
+            
+            <!-- Versão Desktop - Tabela -->
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Tipo</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Fornecedor</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Descrição</th>
+                            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500">Valor</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for despesa in resultado.despesas_list %}
+                        <tr>
+                            <td class="px-3 py-2">{{ despesa.tipo.nome }}</td>
+                            <td class="px-3 py-2">{{ despesa.fornecedor|default:"-" }}</td>
+                            <td class="px-3 py-2">{{ despesa.descricao|truncatewords:8 }}</td>
+                            <td class="px-3 py-2 text-right font-semibold text-red-600">R$ {{ despesa.valor|floatformat:2 }}</td>
+                            <td class="px-3 py-2">{{ despesa.data_despesa|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-gray-50">
+                        <tr>
+                            <td colspan="3" class="px-3 py-2 font-semibold text-right">Total:</td>
+                            <td class="px-3 py-2 text-right font-bold text-red-600">R$ {{ resultado.despesas|floatformat:2 }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-gray-500">Nenhuma despesa registrada</p>
+        {% endif %}
+    </div>
+
+    <!-- Resumo do Lucro -->
+    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-3 sm:p-4 border-2 border-blue-300">
+        <h4 class="font-semibold text-gray-900 mb-3 text-sm sm:text-base">📊 Cálculo do Resultado</h4>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center">
+            <div>
+                <p class="text-xs text-gray-600 mb-1">Valor de Venda</p>
+                <p class="text-base sm:text-lg font-bold text-green-600">R$ {{ resultado.valor_venda|floatformat:2 }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-600 mb-1">Valor de Compra</p>
+                <p class="text-base sm:text-lg font-bold text-gray-700">- R$ {{ resultado.valor_compra|floatformat:2 }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-600 mb-1">Total de Despesas</p>
+                <p class="text-base sm:text-lg font-bold text-red-600">- R$ {{ resultado.despesas|floatformat:2 }}</p>
+            </div>
+            <div class="col-span-2 lg:col-span-1 bg-white rounded-lg p-2">
+                <p class="text-xs text-gray-600 mb-1">Lucro/Prejuízo</p>
+                <p class="text-xl sm:text-2xl font-bold {% if resultado.lucro >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    R$ {{ resultado.lucro|floatformat:2 }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

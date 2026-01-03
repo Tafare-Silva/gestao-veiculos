@@ -1,0 +1,180 @@
+{% extends 'veiculos/base.html' %}
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold">Relatório por Veículo</h1>
+    <p class="text-gray-600 mt-2 text-sm sm:text-base">Lucro/prejuízo individual de cada veículo vendido</p>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-6">
+    <h2 class="text-base sm:text-lg font-semibold text-gray-900 mb-4">🔍 Filtros</h2>
+    <form method="get" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data Início:</label>
+                <input type="date" name="data_inicio" value="{{ data_inicio|date:'Y-m-d' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data Fim:</label>
+                <input type="date" name="data_fim" value="{{ data_fim|date:'Y-m-d' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Veículo:</label>
+                <select name="veiculo" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <option value="">Todos</option>
+                    {% for v in todos_veiculos %}
+                    <option value="{{ v.id }}" {% if veiculo_selecionado == v.id|stringformat:"s" %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cliente:</label>
+                <select name="cliente" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <option value="">Todos</option>
+                    {% for c in todos_clientes %}
+                    <option value="{{ c.id }}" {% if cliente_selecionado == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <button type="submit" class="btn-primary w-full sm:w-auto">Aplicar Filtros</button>
+            <a href="{% url 'relatorio_por_veiculo' %}" class="btn-secondary w-full sm:w-auto text-center">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Resultados -->
+{% if resultados %}
+    <!-- Versão Desktop (Tabela) -->
+    <div class="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Veículo</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Compra</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Venda</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Despesas</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Lucro/Prejuízo</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Detalhes</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for resultado in resultados %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium">
+                        <a href="{% url 'veiculo_detalhe' resultado.veiculo.pk %}" class="text-blue-600 hover:underline">
+                            {{ resultado.veiculo }}
+                        </a>
+                        <div class="text-xs text-gray-500 mt-1">{{ resultado.venda.data_venda|date:"d/m/Y" }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right">R$ {{ resultado.valor_compra|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-sm text-right text-green-600 font-semibold">R$ {{ resultado.valor_venda|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-sm text-right text-red-600">R$ {{ resultado.despesas|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-sm text-right font-bold {% if resultado.lucro >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                        R$ {{ resultado.lucro|floatformat:2 }}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="toggleDetails({{ forloop.counter }})" class="text-blue-600 hover:text-blue-800 font-bold text-xl" id="btn-{{ forloop.counter }}">
+                            +
+                        </button>
+                    </td>
+                </tr>
+                <!-- Detalhes Desktop -->
+                <tr id="details-{{ forloop.counter }}" class="hidden bg-blue-50">
+                    <td colspan="6" class="px-6 py-4">
+                        {% include 'veiculos/relatorio_detalhes.html' with resultado=resultado %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Versão Mobile (Cards) -->
+    <div class="lg:hidden space-y-4">
+        {% for resultado in resultados %}
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <!-- Card Header -->
+            <div class="p-4 bg-gray-50 border-b">
+                <a href="{% url 'veiculo_detalhe' resultado.veiculo.pk %}" class="text-blue-600 hover:underline font-semibold text-base">
+                    {{ resultado.veiculo }}
+                </a>
+                <div class="text-xs text-gray-500 mt-1">{{ resultado.venda.data_venda|date:"d/m/Y" }}</div>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="p-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <div class="text-xs text-gray-500">Compra</div>
+                        <div class="font-semibold">R$ {{ resultado.valor_compra|floatformat:2 }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500">Venda</div>
+                        <div class="font-semibold text-green-600">R$ {{ resultado.valor_venda|floatformat:2 }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500">Despesas</div>
+                        <div class="font-semibold text-red-600">R$ {{ resultado.despesas|floatformat:2 }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500">Lucro</div>
+                        <div class="font-bold text-lg {% if resultado.lucro >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            R$ {{ resultado.lucro|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botão Detalhes -->
+                <button onclick="toggleDetails({{ forloop.counter }})" class="w-full btn-primary text-sm py-2" id="btn-mobile-{{ forloop.counter }}">
+                    <span id="btn-text-{{ forloop.counter }}">Ver Detalhes</span>
+                </button>
+            </div>
+            
+            <!-- Detalhes Mobile -->
+            <div id="details-{{ forloop.counter }}" class="hidden border-t">
+                <div class="p-4">
+                    {% include 'veiculos/relatorio_detalhes.html' with resultado=resultado %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-500">Nenhum veículo vendido encontrado com os filtros aplicados.</p>
+    </div>
+{% endif %}
+
+<script>
+function toggleDetails(id) {
+    const detailsRow = document.getElementById('details-' + id);
+    const btn = document.getElementById('btn-' + id);
+    const btnMobile = document.getElementById('btn-mobile-' + id);
+    const btnText = document.getElementById('btn-text-' + id);
+    
+    if (detailsRow.classList.contains('hidden')) {
+        detailsRow.classList.remove('hidden');
+        if (btn) {
+            btn.textContent = '−';
+            btn.classList.add('text-red-600');
+            btn.classList.remove('text-blue-600');
+        }
+        if (btnText) {
+            btnText.textContent = 'Ocultar Detalhes';
+        }
+    } else {
+        detailsRow.classList.add('hidden');
+        if (btn) {
+            btn.textContent = '+';
+            btn.classList.add('text-blue-600');
+            btn.classList.remove('text-red-600');
+        }
+        if (btnText) {
+            btnText.textContent = 'Ver Detalhes';
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestão de Veículos{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @layer utilities {
+            .btn-primary {
+                @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
+            }
+            .btn-secondary {
+                @apply bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
+            }
+            .btn-danger {
+                @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
+            }
+            .btn-success {
+                @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'dashboard' %}" class="text-xl font-bold">🚗 Gestão de Veículos</a>
+                </div>
+                
+                <!-- Botão Mobile (Hamburger) -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" type="button" class="inline-flex items-center justify-center p-2 rounded-md hover:bg-blue-700 focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Menu Desktop -->
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <a href="{% url 'dashboard' %}" class="hover:bg-blue-700 px-3 py-2 rounded-md">Dashboard</a>
+                    
+                    <!-- Dropdown Veículos -->
+                    <div class="relative group">
+                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
+                            Veículos
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50">
+                            <a href="{% url 'veiculo_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Listar Veículos</a>
+                            <a href="{% url 'veiculo_novo' %}" class="block px-4 py-2 hover:bg-gray-100">Novo Veículo</a>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Cadastros -->
+                    <div class="relative group">
+                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
+                            Cadastros
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50">
+                            <a href="{% url 'cliente_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Clientes</a>
+                            <a href="{% url 'fornecedor_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Fornecedores</a>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'venda_lista' %}" class="hover:bg-blue-700 px-3 py-2 rounded-md">Vendas</a>
+
+                    <!-- Dropdown Relatórios -->
+                    <div class="relative group">
+                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
+                            Relatórios
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50">
+                            <a href="{% url 'relatorio_geral' %}" class="block px-4 py-2 hover:bg-gray-100">Relatório Geral</a>
+                            <a href="{% url 'relatorio_por_veiculo' %}" class="block px-4 py-2 hover:bg-gray-100">Por Veículo</a>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Configurações -->
+                    <div class="relative group">
+                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
+                            ⚙️
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50 right-0">
+                            <a href="{% url 'tipo_despesa_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Tipos de Despesa</a>
+                            <a href="{% url 'forma_pagamento_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Formas de Pagamento</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Mobile (Oculto por padrão) -->
+        <div id="mobile-menu" class="hidden md:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{% url 'dashboard' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md">Dashboard</a>
+                
+                <!-- Veículos Mobile -->
+                <div class="block">
+                    <button onclick="toggleMobileSubmenu('veiculos')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
+                        Veículos
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="mobile-veiculos" class="hidden pl-4">
+                        <a href="{% url 'veiculo_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Listar Veículos</a>
+                        <a href="{% url 'veiculo_novo' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Novo Veículo</a>
+                    </div>
+                </div>
+
+                <!-- Cadastros Mobile -->
+                <div class="block">
+                    <button onclick="toggleMobileSubmenu('cadastros')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
+                        Cadastros
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="mobile-cadastros" class="hidden pl-4">
+                        <a href="{% url 'cliente_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Clientes</a>
+                        <a href="{% url 'fornecedor_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Fornecedores</a>
+                    </div>
+                </div>
+
+                <a href="{% url 'venda_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md">Vendas</a>
+
+                <!-- Relatórios Mobile -->
+                <div class="block">
+                    <button onclick="toggleMobileSubmenu('relatorios')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
+                        Relatórios
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="mobile-relatorios" class="hidden pl-4">
+                        <a href="{% url 'relatorio_geral' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Relatório Geral</a>
+                        <a href="{% url 'relatorio_por_veiculo' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Por Veículo</a>
+                    </div>
+                </div>
+
+                <!-- Configurações Mobile -->
+                <div class="block">
+                    <button onclick="toggleMobileSubmenu('config')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
+                        Configurações
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="mobile-config" class="hidden pl-4">
+                        <a href="{% url 'tipo_despesa_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Tipos de Despesa</a>
+                        <a href="{% url 'forma_pagamento_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Formas de Pagamento</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-blue-100 border-blue-400 text-blue-700{% endif %} border px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
+            <p class="text-sm">&copy; 2025 Sistema de Gestão de Veículos</p>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle do menu mobile principal
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Toggle dos submenus mobile
+        function toggleMobileSubmenu(id) {
+            const submenu = document.getElementById('mobile-' + id);
+            submenu.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
