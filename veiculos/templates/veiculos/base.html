@@ -1,3 +1,5 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -29,7 +31,7 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex-shrink-0">
-                    <a href="{% url 'dashboard' %}" class="text-xl font-bold">🚗 Gestão de Veículos</a>
+                    <a href="{% url 'dashboard' %}" class="text-xl font-bold">🚗 Gestão de Veículos - Cleiton Automóveis</a>
                 </div>
                 
                 <!-- Botão Mobile (Hamburger) -->
@@ -185,12 +187,32 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
-            <p class="text-sm">&copy; 2025 Sistema de Gestão de Veículos</p>
+     <!-- Footer -->
+    <footer class="mt-10 border-t border-slate-200 bg-white">
+  <div class="max-w-6xl mx-auto px-4 py-5">
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+
+      <div class="flex items-center gap-3 text-center sm:text-left">
+        <img src="{% static 'images/logo.png' %}" alt="BLANJOS SISTEMAS" class="h-16 sm:h-18 w-auto opacity-95" />
+        <div class="text-sm text-slate-600 leading-tight">
+          <div>Desenvolvido por: <span class="font-bold text-slate-900">BLANJOS SISTEMAS</span></div>
+          <div>Contato: <span class="font-semibold text-slate-800">(43) 99629-5313</span></div>
+          <div>Tafarel Rocha da Silva</div>
         </div>
-    </footer>
+      </div>
+
+      <a href="https://wa.me/5543996295313?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20no%20sistema."
+         target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition text-sm"
+         aria-label="Abrir suporte no WhatsApp" title="Suporte via WhatsApp">
+        <i class="fab fa-whatsapp text-lg"></i>
+        <span class="font-semibold">Suporte</span>
+      </a>
+
+    </div>
+  </div>
+</footer>
+
 
     <script>
         // Toggle do menu mobile principal
