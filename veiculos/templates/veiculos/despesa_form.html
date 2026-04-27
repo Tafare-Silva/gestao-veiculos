@@ -3,7 +3,7 @@
 {% block content %}
 <div class="mb-8">
     <h1 class="text-3xl font-bold text-gray-900">{{ titulo }}</h1>
-    <p class="text-gray-600 mt-2">Veículo: {{ veiculo|default:despesa.veiculo }}</p>
+    <p class="text-gray-600 mt-2">Veículo: {{ veiculo }}</p>
 </div>
 
 <div class="max-w-2xl bg-white rounded-lg shadow p-6">
@@ -20,7 +20,7 @@
         {% endfor %}
         
         <div class="flex justify-end space-x-3 pt-4">
-            <a href="{% url 'veiculo_detalhe' veiculo.pk|default:despesa.veiculo.pk %}" class="btn-secondary">Cancelar</a>
+            <a href="{% url 'veiculo_detalhe' veiculo.pk %}" class="btn-secondary">Cancelar</a>
             <button type="submit" class="btn-primary">Salvar</button>
         </div>
     </form>
