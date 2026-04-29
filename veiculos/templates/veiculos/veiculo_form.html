@@ -19,7 +19,19 @@
                     {{ field.label }}
                     {% if field.field.required %}<span class="text-red-600">*</span>{% endif %}
                 </label>
+                
+                <!-- Campo com botão de adicionar rápido -->
+                {% if field.name == 'fornecedor' %}
+                <div class="flex gap-2">
+                    {{ field }}
+                    <button type="button" onclick="abrirModal('modalFornecedor')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex-shrink-0" title="Adicionar novo fornecedor">
+                        ➕
+                    </button>
+                </div>
+                {% else %}
                 {{ field }}
+                {% endif %}
+                
                 {% if field.errors %}
                     <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
                 {% endif %}
@@ -142,4 +154,8 @@ function previewImages(event) {
     }
 }
 </script>
+
+<!-- Incluir modais de cadastro rápido -->
+{% include 'veiculos/modals_cadastro.html' %}
+
 {% endblock %}

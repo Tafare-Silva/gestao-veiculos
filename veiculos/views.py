@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Sum, Q, Count
+from django.http import JsonResponse
 from decimal import Decimal
 from .models import (
     Veiculo, VeiculoImagem, Despesa, Cliente, Fornecedor, Venda,
@@ -10,6 +11,84 @@ from .forms import (
     VeiculoForm, DespesaForm, ClienteForm, FornecedorForm,
     VendaForm, TipoDespesaForm, FormaPagamentoForm
 )
+
+
+# ============= CADASTRO RÁPIDO VIA AJAX =============
+
+def fornecedor_ajax(request):
+    """Cadastro rápido de fornecedor via AJAX"""
+    if request.method == 'POST':
+        form = FornecedorForm(request.POST)
+        if form.is_valid():
+            fornecedor = form.save()
+            return JsonResponse({
+                'success': True,
+                'id': fornecedor.id,
+                'nome': fornecedor.nome
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            })
+    return JsonResponse({'success': False})
+
+
+def cliente_ajax(request):
+    """Cadastro rápido de cliente via AJAX"""
+    if request.method == 'POST':
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            cliente = form.save()
+            return JsonResponse({
+                'success': True,
+                'id': cliente.id,
+                'nome': cliente.nome
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            })
+    return JsonResponse({'success': False})
+
+
+def tipo_despesa_ajax(request):
+    """Cadastro rápido de tipo de despesa via AJAX"""
+    if request.method == 'POST':
+        form = TipoDespesaForm(request.POST)
+        if form.is_valid():
+            tipo = form.save()
+            return JsonResponse({
+                'success': True,
+                'id': tipo.id,
+                'nome': tipo.nome
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            })
+    return JsonResponse({'success': False})
+
+
+def forma_pagamento_ajax(request):
+    """Cadastro rápido de forma de pagamento via AJAX"""
+    if request.method == 'POST':
+        form = FormaPagamentoForm(request.POST)
+        if form.is_valid():
+            forma = form.save()
+            return JsonResponse({
+                'success': True,
+                'id': forma.id,
+                'nome': forma.nome
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            })
+    return JsonResponse({'success': False})
 
 
 # ============= DASHBOARD =============

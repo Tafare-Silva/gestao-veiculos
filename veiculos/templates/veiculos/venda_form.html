@@ -10,7 +10,26 @@
         {% for field in form %}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+            
+            <!-- Campos com botão de adicionar rápido -->
+            {% if field.name == 'cliente' %}
+            <div class="flex gap-2">
+                {{ field }}
+                <button type="button" onclick="abrirModal('modalCliente')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex-shrink-0" title="Adicionar novo cliente">
+                    ➕
+                </button>
+            </div>
+            {% elif field.name == 'forma_pagamento' %}
+            <div class="flex gap-2">
+                {{ field }}
+                <button type="button" onclick="abrirModal('modalFormaPagamento')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex-shrink-0" title="Adicionar forma de pagamento">
+                    ➕
+                </button>
+            </div>
+            {% else %}
             {{ field }}
+            {% endif %}
+            
             {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
             {% if field.help_text %}<p class="text-sm text-gray-500 mt-1">{{ field.help_text }}</p>{% endif %}
         </div>
@@ -61,4 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
     valorEntradaInput.addEventListener('input', atualizarResumo);
 });
 </script>
+
+<!-- Incluir modais de cadastro rápido -->
+{% include 'veiculos/modals_cadastro.html' %}
+
 {% endblock %}

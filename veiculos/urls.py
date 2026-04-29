@@ -5,6 +5,12 @@ urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     
+    # AJAX - Cadastro Rápido
+    path('ajax/fornecedor/', views.fornecedor_ajax, name='fornecedor_ajax'),
+    path('ajax/cliente/', views.cliente_ajax, name='cliente_ajax'),
+    path('ajax/tipo-despesa/', views.tipo_despesa_ajax, name='tipo_despesa_ajax'),
+    path('ajax/forma-pagamento/', views.forma_pagamento_ajax, name='forma_pagamento_ajax'),
+    
     # Veículos
     path('veiculos/', views.veiculo_lista, name='veiculo_lista'),
     path('veiculos/novo/', views.veiculo_novo, name='veiculo_novo'),

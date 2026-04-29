@@ -14,7 +14,26 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">
                 {{ field.label }}{% if field.field.required %}*{% endif %}
             </label>
+            
+            <!-- Campos com botão de adicionar rápido -->
+            {% if field.name == 'tipo' %}
+            <div class="flex gap-2">
+                {{ field }}
+                <button type="button" onclick="abrirModal('modalTipoDespesa')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex-shrink-0" title="Adicionar tipo de despesa">
+                    ➕
+                </button>
+            </div>
+            {% elif field.name == 'fornecedor' %}
+            <div class="flex gap-2">
+                {{ field }}
+                <button type="button" onclick="abrirModal('modalFornecedor')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex-shrink-0" title="Adicionar fornecedor">
+                    ➕
+                </button>
+            </div>
+            {% else %}
             {{ field }}
+            {% endif %}
+            
             {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
         </div>
         {% endfor %}
@@ -25,4 +44,8 @@
         </div>
     </form>
 </div>
+
+<!-- Incluir modais de cadastro rápido -->
+{% include 'veiculos/modals_cadastro.html' %}
+
 {% endblock %}
