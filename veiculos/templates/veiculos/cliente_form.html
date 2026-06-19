@@ -1,20 +1,200 @@
 {% extends 'veiculos/base.html' %}
+
+{% block title %}{{ titulo }} - Gestão de Veículos{% endblock %}
+
 {% block content %}
-<div class="mb-8"><h1 class="text-3xl font-bold">{{ titulo }}</h1></div>
-<div class="max-w-2xl bg-white rounded-lg shadow p-6">
-    <form method="post" class="space-y-4">
-        {% csrf_token %}
-        {% for field in form %}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
-            {{ field }}
-            {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
-        </div>
-        {% endfor %}
-        <div class="flex justify-end space-x-3 pt-4">
-            <a href="{% url 'cliente_lista' %}" class="btn-secondary">Cancelar</a>
-            <button type="submit" class="btn-primary">Salvar</button>
-        </div>
-    </form>
+
+<!-- Cabeçalho -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">{{ titulo }}</h1>
+        <p class="text-slate-500 text-sm mt-0.5">Preencha os dados do cliente abaixo</p>
+    </div>
+    <a href="{% url 'cliente_lista' %}" class="btn-secondary self-start sm:self-auto">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
 </div>
+
+<form method="post" class="space-y-5">
+{% csrf_token %}
+
+<!-- ===== DADOS PESSOAIS ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-user text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Dados Pessoais</h2>
+            <p class="text-blue-100 text-xs">Informações de identificação do cliente</p>
+        </div>
+    </div>
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <!-- Nome -->
+        <div class="sm:col-span-2 lg:col-span-1">
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Nome Completo <span class="text-red-500">*</span>
+            </label>
+            {{ form.nome }}
+            {% if form.nome.errors %}<p class="mt-1 text-xs text-red-600">{{ form.nome.errors.0 }}</p>{% endif %}
+        </div>
+
+        <!-- CPF -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">CPF</label>
+            {{ form.cpf }}
+        </div>
+
+        <!-- RG -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">RG</label>
+            {{ form.rg }}
+        </div>
+
+        <!-- Data de Nascimento -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Data de Nascimento</label>
+            {{ form.data_nascimento }}
+        </div>
+
+        <!-- Estado Civil -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Estado Civil</label>
+            {{ form.estado_civil }}
+        </div>
+
+        <!-- Profissão -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Profissão</label>
+            {{ form.profissao }}
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== DOCUMENTOS ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-600">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-id-badge text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Documentos</h2>
+            <p class="text-amber-100 text-xs">Carteira de Habilitação</p>
+        </div>
+    </div>
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <!-- CNH -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                CNH (Habilitação)
+            </label>
+            {{ form.cnh }}
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== CONTATO ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-phone text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Contato</h2>
+            <p class="text-emerald-100 text-xs">Telefone e e-mail para contato</p>
+        </div>
+    </div>
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <!-- Telefone -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Telefone / WhatsApp <span class="text-red-500">*</span>
+            </label>
+            {{ form.telefone }}
+            {% if form.telefone.errors %}<p class="mt-1 text-xs text-red-600">{{ form.telefone.errors.0 }}</p>{% endif %}
+        </div>
+
+        <!-- E-mail -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">E-mail</label>
+            {{ form.email }}
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== ENDEREÇO ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-map-marker-alt text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Endereço</h2>
+            <p class="text-violet-100 text-xs">Localização do cliente</p>
+        </div>
+    </div>
+    <div class="p-6 space-y-5">
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-5">
+            <!-- CEP -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">CEP</label>
+                {{ form.cep }}
+            </div>
+
+            <!-- Cidade -->
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Cidade</label>
+                {{ form.cidade }}
+            </div>
+
+            <!-- UF -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">UF</label>
+                {{ form.estado_uf }}
+            </div>
+        </div>
+
+        <!-- Endereço completo -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Endereço Completo</label>
+            {{ form.endereco }}
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== OBSERVAÇÕES ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-slate-600 to-slate-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-sticky-note text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Observações</h2>
+            <p class="text-slate-300 text-xs">Informações adicionais</p>
+        </div>
+    </div>
+    <div class="p-6">
+        {{ form.observacoes }}
+    </div>
+</div>
+
+<!-- Ações -->
+<div class="flex flex-col sm:flex-row justify-end gap-3 py-2">
+    <a href="{% url 'cliente_lista' %}" class="btn-secondary justify-center">
+        <i class="fas fa-times"></i> Cancelar
+    </a>
+    <button type="submit" class="btn-primary justify-center px-8">
+        <i class="fas fa-save"></i> Salvar Cliente
+    </button>
+</div>
+
+</form>
 {% endblock %}

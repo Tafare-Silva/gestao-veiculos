@@ -1,0 +1,398 @@
+<!-- ===== OVERLAY ===== -->
+<div id="modalOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden" onclick="fecharTodosModais()"></div>
+
+<!-- ===== ESTILOS DOS MODAIS ===== -->
+<style>
+.modal-card { background:#fff; border-radius:1rem; box-shadow:0 20px 60px rgba(0,0,0,.2); width:100%; max-width:28rem; margin:auto; display:flex; flex-direction:column; max-height:90vh; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.4rem; border-bottom:1px solid #f1f5f9; flex-shrink:0; }
+.modal-title { font-size:.95rem; font-weight:700; color:#0f172a; }
+.modal-body { padding:1.4rem; display:flex; flex-direction:column; gap:1rem; }
+.modal-body-scroll { overflow-y:auto; padding:1.4rem; display:flex; flex-direction:column; gap:.85rem; flex:1; }
+.modal-footer { display:flex; justify-content:flex-end; gap:.6rem; padding:1rem 1.4rem; border-top:1px solid #f1f5f9; flex-shrink:0; }
+.modal-field label { display:block; font-size:.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.35rem; }
+.modal-field input, .modal-field textarea, .modal-field select {
+    display:block; width:100%; border-radius:.5rem; border:1px solid #e2e8f0;
+    background:#f8fafc; padding:.55rem .9rem; font-size:.85rem; color:#1e293b;
+    transition:all .15s;
+}
+.modal-field input:focus, .modal-field textarea:focus, .modal-field select:focus {
+    outline:none; border-color:#2563EB; background:#fff;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+.modal-field textarea { resize:none; }
+.modal-check { display:flex; align-items:center; gap:.5rem; font-size:.85rem; color:#374151; }
+.modal-check input[type=checkbox] { width:1rem; height:1rem; border-radius:.25rem; accent-color:#2563EB; }
+.modal-error { background:#fef2f2; border:1px solid #fecaca; border-radius:.5rem; padding:.6rem .9rem; font-size:.8rem; color:#b91c1c; display:none; }
+.modal-error.show { display:block; }
+.modal-section-label {
+    font-size:.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em;
+    padding:.5rem 0 .5rem; border-top:1px solid #f1f5f9; margin-top:.1rem;
+}
+</style>
+
+<!-- ===== MODAL FORNECEDOR ===== -->
+<div id="modalFornecedor" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="flex items-center gap-2.5">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                    <i class="fas fa-building text-blue-600 text-xs"></i>
+                </div>
+                <span class="modal-title">Novo Fornecedor</span>
+            </div>
+            <button type="button" onclick="fecharModal('modalFornecedor')" class="text-slate-400 hover:text-slate-700 transition-colors text-xl leading-none">&times;</button>
+        </div>
+        <form id="formFornecedor" class="modal-body">
+            {% csrf_token %}
+            <div id="errosFornecedor" class="modal-error"></div>
+            <div class="modal-field">
+                <label>Nome <span class="text-red-500">*</span></label>
+                <input type="text" name="nome" placeholder="Nome do fornecedor" required>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="modal-field">
+                    <label>CNPJ / CPF</label>
+                    <input type="text" name="cnpj_cpf" placeholder="CNPJ ou CPF">
+                </div>
+                <div class="modal-field">
+                    <label>Telefone</label>
+                    <input type="text" name="telefone" placeholder="(00) 00000-0000">
+                </div>
+            </div>
+            <div class="modal-field">
+                <label>E-mail</label>
+                <input type="email" name="email" placeholder="email@exemplo.com">
+            </div>
+            <div class="modal-field">
+                <label>Endereço</label>
+                <input type="text" name="endereco" placeholder="Rua, número, bairro">
+            </div>
+            <div class="modal-check">
+                <input type="checkbox" name="ativo" id="fornAtivo" checked>
+                <label for="fornAtivo">Fornecedor ativo</label>
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button type="button" onclick="fecharModal('modalFornecedor')" class="btn-secondary">Cancelar</button>
+            <button type="button" onclick="document.getElementById('formFornecedor').dispatchEvent(new Event('submit'))" class="btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL CLIENTE ===== -->
+<div id="modalCliente" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-card" style="max-width:44rem">
+        <div class="modal-header">
+            <div class="flex items-center gap-2.5">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+                    <i class="fas fa-user text-emerald-600 text-xs"></i>
+                </div>
+                <span class="modal-title">Novo Cliente</span>
+            </div>
+            <button type="button" onclick="fecharModal('modalCliente')" class="text-slate-400 hover:text-slate-700 transition-colors text-xl leading-none">&times;</button>
+        </div>
+        <form id="formCliente" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+            {% csrf_token %}
+            <div class="modal-body-scroll">
+
+                <div id="errosCliente" class="modal-error"></div>
+
+                <!-- Dados Pessoais -->
+                <div class="modal-section-label"><i class="fas fa-user-circle mr-1"></i> Dados Pessoais</div>
+                <div class="modal-field">
+                    <label>Nome Completo <span class="text-red-500">*</span></label>
+                    <input type="text" name="nome" placeholder="Nome completo" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="modal-field">
+                        <label>Data de Nascimento</label>
+                        <input type="date" name="data_nascimento">
+                    </div>
+                    <div class="modal-field">
+                        <label>Estado Civil</label>
+                        <select name="estado_civil">
+                            <option value="">-- Selecione --</option>
+                            <option value="solteiro">Solteiro(a)</option>
+                            <option value="casado">Casado(a)</option>
+                            <option value="divorciado">Divorciado(a)</option>
+                            <option value="viuvo">Viúvo(a)</option>
+                            <option value="uniao_estavel">União Estável</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-field">
+                    <label>Profissão</label>
+                    <input type="text" name="profissao" placeholder="Ex: Empresário, Autônomo">
+                </div>
+
+                <!-- Documentos -->
+                <div class="modal-section-label"><i class="fas fa-id-card mr-1"></i> Documentos</div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="modal-field">
+                        <label>CPF</label>
+                        <input type="text" name="cpf" placeholder="000.000.000-00">
+                    </div>
+                    <div class="modal-field">
+                        <label>RG</label>
+                        <input type="text" name="rg" placeholder="RG com órgão emissor">
+                    </div>
+                </div>
+                <div class="modal-field">
+                    <label>CNH (número)</label>
+                    <input type="text" name="cnh" placeholder="Número da habilitação">
+                </div>
+
+                <!-- Contato -->
+                <div class="modal-section-label"><i class="fas fa-phone mr-1"></i> Contato</div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="modal-field">
+                        <label>Telefone</label>
+                        <input type="text" name="telefone" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="modal-field">
+                        <label>E-mail</label>
+                        <input type="email" name="email" placeholder="email@exemplo.com">
+                    </div>
+                </div>
+
+                <!-- Endereço -->
+                <div class="modal-section-label"><i class="fas fa-map-marker-alt mr-1"></i> Endereço</div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="modal-field col-span-2">
+                        <label>Cidade</label>
+                        <input type="text" name="cidade" placeholder="Cidade">
+                    </div>
+                    <div class="modal-field">
+                        <label>UF</label>
+                        <select name="estado_uf">
+                            <option value="">-- UF --</option>
+                            <option value="AC">AC</option><option value="AL">AL</option>
+                            <option value="AM">AM</option><option value="AP">AP</option>
+                            <option value="BA">BA</option><option value="CE">CE</option>
+                            <option value="DF">DF</option><option value="ES">ES</option>
+                            <option value="GO">GO</option><option value="MA">MA</option>
+                            <option value="MG">MG</option><option value="MS">MS</option>
+                            <option value="MT">MT</option><option value="PA">PA</option>
+                            <option value="PB">PB</option><option value="PE">PE</option>
+                            <option value="PI">PI</option><option value="PR">PR</option>
+                            <option value="RJ">RJ</option><option value="RN">RN</option>
+                            <option value="RO">RO</option><option value="RR">RR</option>
+                            <option value="RS">RS</option><option value="SC">SC</option>
+                            <option value="SE">SE</option><option value="SP">SP</option>
+                            <option value="TO">TO</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="modal-field">
+                        <label>CEP</label>
+                        <input type="text" name="cep" placeholder="00000-000">
+                    </div>
+                    <div class="modal-field col-span-2">
+                        <label>Endereço</label>
+                        <input type="text" name="endereco" placeholder="Rua, número, bairro">
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div class="modal-section-label"><i class="fas fa-sticky-note mr-1"></i> Observações</div>
+                <div class="modal-field">
+                    <textarea name="observacoes" rows="2" placeholder="Observações sobre o cliente..."></textarea>
+                </div>
+
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button type="button" onclick="fecharModal('modalCliente')" class="btn-secondary">Cancelar</button>
+            <button type="button" onclick="document.getElementById('formCliente').dispatchEvent(new Event('submit'))" class="btn-primary">
+                <i class="fas fa-save"></i> Salvar Cliente
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL TIPO DE DESPESA ===== -->
+<div id="modalTipoDespesa" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="flex items-center gap-2.5">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+                    <i class="fas fa-tags text-amber-600 text-xs"></i>
+                </div>
+                <span class="modal-title">Novo Tipo de Despesa</span>
+            </div>
+            <button type="button" onclick="fecharModal('modalTipoDespesa')" class="text-slate-400 hover:text-slate-700 transition-colors text-xl leading-none">&times;</button>
+        </div>
+        <form id="formTipoDespesa" class="modal-body">
+            {% csrf_token %}
+            <div id="errosTipoDespesa" class="modal-error"></div>
+            <div class="modal-field">
+                <label>Nome <span class="text-red-500">*</span></label>
+                <input type="text" name="nome" placeholder="Ex: Mecânica, Funilaria, IPVA" required>
+            </div>
+            <div class="modal-field">
+                <label>Descrição</label>
+                <textarea name="descricao" rows="2" placeholder="Descrição opcional..."></textarea>
+            </div>
+            <div class="modal-check">
+                <input type="checkbox" name="ativo" id="tipoAtivo" checked>
+                <label for="tipoAtivo">Tipo ativo</label>
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button type="button" onclick="fecharModal('modalTipoDespesa')" class="btn-secondary">Cancelar</button>
+            <button type="button" onclick="document.getElementById('formTipoDespesa').dispatchEvent(new Event('submit'))" class="btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL FORMA DE PAGAMENTO ===== -->
+<div id="modalFormaPagamento" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-card" style="max-width:22rem">
+        <div class="modal-header">
+            <div class="flex items-center gap-2.5">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
+                    <i class="fas fa-credit-card text-violet-600 text-xs"></i>
+                </div>
+                <span class="modal-title">Nova Forma de Pagamento</span>
+            </div>
+            <button type="button" onclick="fecharModal('modalFormaPagamento')" class="text-slate-400 hover:text-slate-700 transition-colors text-xl leading-none">&times;</button>
+        </div>
+        <form id="formFormaPagamento" class="modal-body">
+            {% csrf_token %}
+            <div id="errosFormaPagamento" class="modal-error"></div>
+            <div class="modal-field">
+                <label>Nome <span class="text-red-500">*</span></label>
+                <input type="text" name="nome" placeholder="Ex: Dinheiro, PIX, Cartão" required>
+            </div>
+            <div class="modal-check">
+                <input type="checkbox" name="ativo" id="pagAtivo" checked>
+                <label for="pagAtivo">Forma ativa</label>
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button type="button" onclick="fecharModal('modalFormaPagamento')" class="btn-secondary">Cancelar</button>
+            <button type="button" onclick="document.getElementById('formFormaPagamento').dispatchEvent(new Event('submit'))" class="btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toastSucesso" class="fixed bottom-5 right-5 z-50 hidden">
+    <div class="flex items-center gap-3 bg-slate-900 text-white text-sm font-medium px-5 py-3.5 rounded-xl shadow-xl">
+        <i class="fas fa-circle-check text-emerald-400"></i>
+        <span id="toastMensagem"></span>
+    </div>
+</div>
+
+<script>
+(function () {
+    var MODAIS = ['modalFornecedor', 'modalCliente', 'modalTipoDespesa', 'modalFormaPagamento'];
+
+    function getCsrf() {
+        var el = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (el) return el.value;
+        var m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    }
+
+    function mostrarErro(elId, msg) {
+        var el = document.getElementById(elId);
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('show');
+    }
+
+    function limparErro(elId) {
+        var el = document.getElementById(elId);
+        if (el) { el.textContent = ''; el.classList.remove('show'); }
+    }
+
+    function adicionarOpcao(selectId, id, nome) {
+        var sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.add(new Option(nome, id));
+        sel.value = id;
+    }
+
+    function mostrarToast(msg) {
+        var toast = document.getElementById('toastSucesso');
+        document.getElementById('toastMensagem').textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(function () { toast.classList.add('hidden'); }, 3000);
+    }
+
+    window.abrirModal = function (id) {
+        document.getElementById('modalOverlay').classList.remove('hidden');
+        var modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(function () {
+                var inp = modal.querySelector('input[type="text"], input[type="email"]');
+                if (inp) inp.focus();
+            }, 60);
+        }
+    };
+
+    window.fecharModal = function (id) {
+        document.getElementById('modalOverlay').classList.add('hidden');
+        var modal = document.getElementById(id);
+        if (modal) modal.classList.add('hidden');
+        var suffix = id.replace('modal', '');
+        var form = document.getElementById('form' + suffix);
+        if (form) form.reset();
+        limparErro('erros' + suffix);
+    };
+
+    window.fecharTodosModais = function () {
+        MODAIS.forEach(function (id) { fecharModal(id); });
+    };
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') fecharTodosModais();
+    });
+
+    function configurarForm(formId, url, selectId, errosId, label) {
+        var form = document.getElementById(formId);
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            limparErro(errosId);
+            fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrf() },
+                body: new FormData(form)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                if (json.success) {
+                    adicionarOpcao(selectId, json.id, json.nome);
+                    fecharModal('modal' + formId.replace('form', ''));
+                    mostrarToast(label + ' cadastrado(a) com sucesso!');
+                } else {
+                    var msgs = [];
+                    if (json.errors) {
+                        Object.keys(json.errors).forEach(function (k) {
+                            var v = json.errors[k];
+                            msgs = msgs.concat(Array.isArray(v) ? v : [String(v)]);
+                        });
+                    }
+                    mostrarErro(errosId, msgs.join(' | ') || 'Erro ao salvar.');
+                }
+            })
+            .catch(function () { mostrarErro(errosId, 'Erro de conexão. Tente novamente.'); });
+        });
+    }
+
+    configurarForm('formFornecedor',     '{% url "fornecedor_ajax" %}',     'id_fornecedor',      'errosFornecedor',     'Fornecedor');
+    configurarForm('formCliente',        '{% url "cliente_ajax" %}',         'id_cliente',         'errosCliente',        'Cliente');
+    configurarForm('formTipoDespesa',    '{% url "tipo_despesa_ajax" %}',    'id_tipo',            'errosTipoDespesa',    'Tipo de despesa');
+    configurarForm('formFormaPagamento', '{% url "forma_pagamento_ajax" %}', 'id_forma_pagamento', 'errosFormaPagamento', 'Forma de pagamento');
+}());
+</script>

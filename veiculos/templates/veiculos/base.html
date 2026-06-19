@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -6,225 +5,333 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gestão de Veículos{% endblock %}</title>
+
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @layer utilities {
-            .btn-primary {
-                @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
-            }
-            .btn-secondary {
-                @apply bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
-            }
-            .btn-danger {
-                @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
-            }
-            .btn-success {
-                @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#3B82F6' }
+                    }
+                }
             }
         }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        /* ---- Botões ---- */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+            color: #fff; font-weight: 600; font-size: 0.875rem;
+            padding: 0.55rem 1.15rem; border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(37,99,235,.35);
+            transition: all .2s; cursor: pointer; border: none;
+        }
+        .btn-primary:hover { background: linear-gradient(135deg, #1D4ED8 0%, #1e40af 100%); box-shadow: 0 4px 10px rgba(37,99,235,.4); transform: translateY(-1px); }
+
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.875rem;
+            padding: 0.55rem 1.15rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;
+            transition: all .2s; cursor: pointer;
+        }
+        .btn-secondary:hover { background: #e2e8f0; color: #1e293b; transform: translateY(-1px); }
+
+        .btn-success {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #fff; font-weight: 600; font-size: 0.875rem;
+            padding: 0.55rem 1.15rem; border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(5,150,105,.35);
+            transition: all .2s; cursor: pointer; border: none;
+        }
+        .btn-success:hover { background: linear-gradient(135deg, #047857 0%, #065f46 100%); box-shadow: 0 4px 10px rgba(5,150,105,.4); transform: translateY(-1px); }
+
+        .btn-danger {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+            color: #fff; font-weight: 600; font-size: 0.875rem;
+            padding: 0.55rem 1.15rem; border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(220,38,38,.35);
+            transition: all .2s; cursor: pointer; border: none;
+        }
+        .btn-danger:hover { background: linear-gradient(135deg, #B91C1C 0%, #991b1b 100%); box-shadow: 0 4px 10px rgba(220,38,38,.4); transform: translateY(-1px); }
+
+        .btn-warning {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+            color: #fff; font-weight: 600; font-size: 0.875rem;
+            padding: 0.55rem 1.15rem; border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(217,119,6,.35);
+            transition: all .2s; cursor: pointer; border: none;
+        }
+        .btn-warning:hover { background: linear-gradient(135deg, #B45309 0%, #92400e 100%); transform: translateY(-1px); }
+
+        /* ---- Navbar dropdown ---- */
+        .nav-dropdown { position: relative; }
+
+        /* Ponte invisível que preenche o espaço entre o botão e o menu,
+           mantendo o :hover ativo enquanto o mouse percorre esse gap */
+        .nav-dropdown::after {
+            content: ''; position: absolute; top: 100%;
+            left: -8px; right: -8px; height: 10px; z-index: 99;
+        }
+
+        .nav-dropdown-menu {
+            display: none; position: absolute; top: calc(100% + 6px); left: 0;
+            background: #fff; border-radius: 0.75rem; min-width: 200px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.08);
+            border: 1px solid #f1f5f9; z-index: 100; overflow: hidden;
+        }
+        .nav-dropdown-menu.right { left: auto; right: 0; }
+        .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+        .nav-dropdown-menu a {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.65rem 1rem; font-size: 0.85rem; color: #374151;
+            transition: background .15s;
+        }
+        .nav-dropdown-menu a:hover { background: #f0f4ff; color: #2563EB; }
+        .nav-dropdown-menu .menu-icon { width: 1.1rem; color: #9ca3af; }
+        .nav-dropdown-menu .divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
+
+        /* ---- Scrollbar fina ---- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Navbar -->
-    <nav class="bg-blue-600 text-white shadow-lg">
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="bg-slate-900 shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex items-center justify-between h-16">
+
                 <!-- Logo -->
-                <div class="flex-shrink-0">
-                    <a href="{% url 'dashboard' %}" class="text-xl font-bold">🚗 Gestão de Veículos - Cleiton Automóveis</a>
-                </div>
-                
-                <!-- Botão Mobile (Hamburger) -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" type="button" class="inline-flex items-center justify-center p-2 rounded-md hover:bg-blue-700 focus:outline-none">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                </div>
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 group">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 shadow-lg group-hover:bg-blue-500 transition-colors">
+                        <i class="fas fa-car text-white text-sm"></i>
+                    </div>
+                    <div class="hidden sm:block">
+                        <div class="text-white font-bold text-sm leading-tight">Cleiton Automóveis</div>
+                        <div class="text-slate-400 text-xs">Gestão de Veículos</div>
+                    </div>
+                </a>
+
+                <!-- Hamburger mobile -->
+                <button id="btn-mobile-menu" type="button"
+                    class="md:hidden flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
 
                 <!-- Menu Desktop -->
-                <div class="hidden md:flex md:items-center md:space-x-4">
-                    <a href="{% url 'dashboard' %}" class="hover:bg-blue-700 px-3 py-2 rounded-md">Dashboard</a>
-                    
-                    <!-- Dropdown Veículos -->
-                    <div class="relative group">
-                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
-                            Veículos
-                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                <div class="hidden md:flex items-center gap-1">
+
+                    <a href="{% url 'dashboard' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-chart-line text-xs"></i> Dashboard
+                    </a>
+
+                    <!-- Veículos -->
+                    <div class="nav-dropdown">
+                        <button class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                            <i class="fas fa-car text-xs"></i> Veículos
+                            <i class="fas fa-chevron-down text-xs opacity-60"></i>
                         </button>
-                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50">
-                            <a href="{% url 'veiculo_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Listar Veículos</a>
-                            <a href="{% url 'veiculo_novo' %}" class="block px-4 py-2 hover:bg-gray-100">Novo Veículo</a>
+                        <div class="nav-dropdown-menu">
+                            <a href="{% url 'veiculo_lista' %}">
+                                <i class="fas fa-list menu-icon"></i> Listar Veículos
+                            </a>
+                            <a href="{% url 'veiculo_novo' %}">
+                                <i class="fas fa-plus-circle menu-icon"></i> Novo Veículo
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Dropdown Cadastros -->
-                    <div class="relative group">
-                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
-                            Cadastros
-                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                    <!-- Cadastros -->
+                    <div class="nav-dropdown">
+                        <button class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                            <i class="fas fa-users text-xs"></i> Cadastros
+                            <i class="fas fa-chevron-down text-xs opacity-60"></i>
                         </button>
-                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50">
-                            <a href="{% url 'cliente_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Clientes</a>
-                            <a href="{% url 'fornecedor_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Fornecedores</a>
+                        <div class="nav-dropdown-menu">
+                            <a href="{% url 'cliente_lista' %}">
+                                <i class="fas fa-user menu-icon"></i> Clientes
+                            </a>
+                            <a href="{% url 'cliente_novo' %}">
+                                <i class="fas fa-user-plus menu-icon"></i> Novo Cliente
+                            </a>
+                            <div class="divider"></div>
+                            <a href="{% url 'fornecedor_lista' %}">
+                                <i class="fas fa-building menu-icon"></i> Fornecedores
+                            </a>
+                            <a href="{% url 'fornecedor_novo' %}">
+                                <i class="fas fa-plus menu-icon"></i> Novo Fornecedor
+                            </a>
                         </div>
                     </div>
 
-                    <a href="{% url 'venda_lista' %}" class="hover:bg-blue-700 px-3 py-2 rounded-md">Vendas</a>
+                    <!-- Vendas -->
+                    <a href="{% url 'venda_lista' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-handshake text-xs"></i> Vendas
+                    </a>
 
-                    <!-- Dropdown Relatórios -->
-                    <div class="relative group">
-                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
-                            Relatórios
-                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                    <!-- Relatórios -->
+                    <div class="nav-dropdown">
+                        <button class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                            <i class="fas fa-chart-bar text-xs"></i> Relatórios
+                            <i class="fas fa-chevron-down text-xs opacity-60"></i>
                         </button>
-                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50">
-                            <a href="{% url 'relatorio_geral' %}" class="block px-4 py-2 hover:bg-gray-100">Relatório Geral</a>
-                            <a href="{% url 'relatorio_por_veiculo' %}" class="block px-4 py-2 hover:bg-gray-100">Por Veículo</a>
+                        <div class="nav-dropdown-menu">
+                            <a href="{% url 'relatorio_geral' %}">
+                                <i class="fas fa-chart-pie menu-icon"></i> Relatório Geral
+                            </a>
+                            <a href="{% url 'relatorio_por_veiculo' %}">
+                                <i class="fas fa-car-side menu-icon"></i> Por Veículo
+                            </a>
+                            <div class="divider"></div>
+                            <a href="{% url 'relatorio_pdf' %}">
+                                <i class="fas fa-file-pdf menu-icon" style="color:#dc2626"></i> Gerar PDF
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Dropdown Configurações -->
-                    <div class="relative group">
-                        <button class="hover:bg-blue-700 px-3 py-2 rounded-md flex items-center">
-                            ⚙️
+                    <!-- Configurações -->
+                    <div class="nav-dropdown">
+                        <button class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                            <i class="fas fa-cog"></i>
                         </button>
-                        <div class="absolute hidden group-hover:block bg-white text-gray-900 -mt-1 py-2 w-48 rounded-md shadow-xl z-50 right-0">
-                            <a href="{% url 'tipo_despesa_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Tipos de Despesa</a>
-                            <a href="{% url 'forma_pagamento_lista' %}" class="block px-4 py-2 hover:bg-gray-100">Formas de Pagamento</a>
+                        <div class="nav-dropdown-menu right">
+                            <a href="{% url 'tipo_despesa_lista' %}">
+                                <i class="fas fa-tags menu-icon"></i> Tipos de Despesa
+                            </a>
+                            <a href="{% url 'forma_pagamento_lista' %}">
+                                <i class="fas fa-credit-card menu-icon"></i> Formas de Pagamento
+                            </a>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
 
-        <!-- Menu Mobile (Oculto por padrão) -->
-        <div id="mobile-menu" class="hidden md:hidden">
-            <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{% url 'dashboard' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md">Dashboard</a>
-                
-                <!-- Veículos Mobile -->
-                <div class="block">
-                    <button onclick="toggleMobileSubmenu('veiculos')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
-                        Veículos
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div id="mobile-veiculos" class="hidden pl-4">
-                        <a href="{% url 'veiculo_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Listar Veículos</a>
-                        <a href="{% url 'veiculo_novo' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Novo Veículo</a>
-                    </div>
+        <!-- Menu Mobile -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800">
+            <div class="px-3 py-3 space-y-1">
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+                    <i class="fas fa-chart-line w-4 text-center"></i> Dashboard
+                </a>
+
+                <button onclick="toggleMobile('mob-veiculos')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+                    <span class="flex items-center gap-3"><i class="fas fa-car w-4 text-center"></i> Veículos</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                <div id="mob-veiculos" class="hidden pl-7 space-y-1">
+                    <a href="{% url 'veiculo_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors"><i class="fas fa-list text-xs"></i> Listar</a>
+                    <a href="{% url 'veiculo_novo' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors"><i class="fas fa-plus text-xs"></i> Novo</a>
                 </div>
 
-                <!-- Cadastros Mobile -->
-                <div class="block">
-                    <button onclick="toggleMobileSubmenu('cadastros')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
-                        Cadastros
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div id="mobile-cadastros" class="hidden pl-4">
-                        <a href="{% url 'cliente_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Clientes</a>
-                        <a href="{% url 'fornecedor_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Fornecedores</a>
-                    </div>
+                <button onclick="toggleMobile('mob-cadastros')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+                    <span class="flex items-center gap-3"><i class="fas fa-users w-4 text-center"></i> Cadastros</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                <div id="mob-cadastros" class="hidden pl-7 space-y-1">
+                    <a href="{% url 'cliente_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors"><i class="fas fa-user text-xs"></i> Clientes</a>
+                    <a href="{% url 'fornecedor_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors"><i class="fas fa-building text-xs"></i> Fornecedores</a>
                 </div>
 
-                <a href="{% url 'venda_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md">Vendas</a>
+                <a href="{% url 'venda_lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+                    <i class="fas fa-handshake w-4 text-center"></i> Vendas
+                </a>
 
-                <!-- Relatórios Mobile -->
-                <div class="block">
-                    <button onclick="toggleMobileSubmenu('relatorios')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
-                        Relatórios
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div id="mobile-relatorios" class="hidden pl-4">
-                        <a href="{% url 'relatorio_geral' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Relatório Geral</a>
-                        <a href="{% url 'relatorio_por_veiculo' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Por Veículo</a>
-                    </div>
+                <button onclick="toggleMobile('mob-relatorios')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+                    <span class="flex items-center gap-3"><i class="fas fa-chart-bar w-4 text-center"></i> Relatórios</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                <div id="mob-relatorios" class="hidden pl-7 space-y-1">
+                    <a href="{% url 'relatorio_geral' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors">Geral</a>
+                    <a href="{% url 'relatorio_por_veiculo' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors">Por Veículo</a>
                 </div>
 
-                <!-- Configurações Mobile -->
-                <div class="block">
-                    <button onclick="toggleMobileSubmenu('config')" class="w-full text-left hover:bg-blue-700 px-3 py-2 rounded-md flex justify-between items-center">
-                        Configurações
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div id="mobile-config" class="hidden pl-4">
-                        <a href="{% url 'tipo_despesa_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Tipos de Despesa</a>
-                        <a href="{% url 'forma_pagamento_lista' %}" class="block hover:bg-blue-700 px-3 py-2 rounded-md text-sm">Formas de Pagamento</a>
-                    </div>
+                <button onclick="toggleMobile('mob-config')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+                    <span class="flex items-center gap-3"><i class="fas fa-cog w-4 text-center"></i> Configurações</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                <div id="mob-config" class="hidden pl-7 space-y-1">
+                    <a href="{% url 'tipo_despesa_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors">Tipos de Despesa</a>
+                    <a href="{% url 'forma_pagamento_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm transition-colors">Formas de Pagamento</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Messages -->
+    <!-- ===== ALERTAS ===== -->
     {% if messages %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 space-y-2">
         {% for message in messages %}
-        <div class="{% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-blue-100 border-blue-400 text-blue-700{% endif %} border px-4 py-3 rounded relative mb-4" role="alert">
-            <span class="block sm:inline">{{ message }}</span>
+        <div class="flex items-start gap-3 px-4 py-3 rounded-xl border text-sm font-medium
+            {% if message.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
+            {% elif message.tags == 'error' %}bg-red-50 border-red-200 text-red-800
+            {% elif message.tags == 'warning' %}bg-amber-50 border-amber-200 text-amber-800
+            {% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}"
+            role="alert">
+            <i class="mt-0.5 fas
+                {% if message.tags == 'success' %}fa-circle-check text-emerald-500
+                {% elif message.tags == 'error' %}fa-circle-xmark text-red-500
+                {% elif message.tags == 'warning' %}fa-triangle-exclamation text-amber-500
+                {% else %}fa-circle-info text-blue-500{% endif %}"></i>
+            <span>{{ message }}</span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Content -->
-    <main class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+    <!-- ===== CONTEÚDO ===== -->
+    <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
         {% block content %}{% endblock %}
     </main>
 
-     <!-- Footer -->
-    <footer class="mt-10 border-t border-slate-200 bg-white">
-  <div class="max-w-6xl mx-auto px-4 py-5">
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-
-      <div class="flex items-center gap-3 text-center sm:text-left">
-        <img src="{% static 'images/logo.png' %}" alt="BLANJOS SISTEMAS" class="h-16 sm:h-18 w-auto opacity-95" />
-        <div class="text-sm text-slate-600 leading-tight">
-          <div>Desenvolvido por: <span class="font-bold text-slate-900">BLANJOS SISTEMAS</span></div>
-          <div>Contato: <span class="font-semibold text-slate-800">(43) 99629-5313</span></div>
-          <div>Tafarel Rocha da Silva</div>
+    <!-- ===== FOOTER ===== -->
+    <footer class="border-t border-slate-200 bg-white mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'images/logo.png' %}" alt="BLANJOS SISTEMAS" class="h-14 w-auto opacity-90">
+                    <div class="text-sm text-slate-500 leading-snug">
+                        <div class="font-semibold text-slate-800">BLANJOS SISTEMAS</div>
+                        <div>Tafarel Rocha da Silva &middot; (43) 99629-5313</div>
+                    </div>
+                </div>
+                <a href="https://wa.me/5543996295313?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20no%20sistema."
+                   target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition text-sm font-semibold">
+                    <i class="fab fa-whatsapp text-lg"></i> Suporte
+                </a>
+            </div>
         </div>
-      </div>
-
-      <a href="https://wa.me/5543996295313?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20no%20sistema."
-         target="_blank" rel="noopener"
-         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition text-sm"
-         aria-label="Abrir suporte no WhatsApp" title="Suporte via WhatsApp">
-        <i class="fab fa-whatsapp text-lg"></i>
-        <span class="font-semibold">Suporte</span>
-      </a>
-
-    </div>
-  </div>
-</footer>
-
+    </footer>
 
     <script>
-        // Toggle do menu mobile principal
-        document.getElementById('mobile-menu-button').addEventListener('click', function() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+        document.getElementById('btn-mobile-menu').addEventListener('click', function () {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
         });
-
-        // Toggle dos submenus mobile
-        function toggleMobileSubmenu(id) {
-            const submenu = document.getElementById('mobile-' + id);
-            submenu.classList.toggle('hidden');
+        function toggleMobile(id) {
+            document.getElementById(id).classList.toggle('hidden');
         }
     </script>
 </body>

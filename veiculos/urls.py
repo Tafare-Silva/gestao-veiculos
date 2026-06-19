@@ -44,9 +44,13 @@ urlpatterns = [
     path('vendas/', views.venda_lista, name='venda_lista'),
     path('vendas/<int:pk>/', views.venda_detalhe, name='venda_detalhe'),
     
+    # Extrato por veículo
+    path('veiculos/<int:pk>/extrato/', views.veiculo_extrato, name='veiculo_extrato'),
+
     # Relatórios
     path('relatorios/geral/', views.relatorio_geral, name='relatorio_geral'),
     path('relatorios/por-veiculo/', views.relatorio_por_veiculo, name='relatorio_por_veiculo'),
+    path('relatorios/pdf/', views.relatorio_pdf, name='relatorio_pdf'),
     
     # Configurações
     path('tipos-despesa/', views.tipo_despesa_lista, name='tipo_despesa_lista'),

@@ -628,6 +628,89 @@ def relatorio_por_veiculo(request):
     return render(request, 'veiculos/relatorio_por_veiculo.html', context)
 
 
+# ============= RELATÓRIO PDF =============
+
+def relatorio_pdf(request):
+    """Relatório de resultados imprimível/PDF com filtros de período"""
+    data_inicio = request.GET.get('data_inicio')
+    data_fim    = request.GET.get('data_fim')
+
+    vendas = Venda.objects.select_related(
+        'veiculo', 'cliente', 'forma_pagamento', 'veiculo_entrada'
+    ).order_by('data_venda')
+
+    if data_inicio:
+        vendas = vendas.filter(data_venda__gte=data_inicio)
+    if data_fim:
+        vendas = vendas.filter(data_venda__lte=data_fim)
+
+    resultados = []
+    total_compra  = Decimal('0.00')
+    total_despesa = Decimal('0.00')
+    total_venda   = Decimal('0.00')
+    total_lucro   = Decimal('0.00')
+
+    for venda in vendas:
+        v         = venda.veiculo
+        despesas  = v.total_despesas()
+        lucro     = venda.valor_venda - v.valor_compra - despesas
+
+        total_compra  += v.valor_compra
+        total_despesa += despesas
+        total_venda   += venda.valor_venda
+        total_lucro   += lucro
+
+        resultados.append({
+            'venda':         venda,
+            'veiculo':       v,
+            'cliente':       venda.cliente,
+            'data_venda':    venda.data_venda,
+            'valor_compra':  v.valor_compra,
+            'despesas':      despesas,
+            'valor_venda':   venda.valor_venda,
+            'lucro':         lucro,
+        })
+
+    context = {
+        'resultados':    resultados,
+        'data_inicio':   data_inicio,
+        'data_fim':      data_fim,
+        'total_compra':  total_compra,
+        'total_despesa': total_despesa,
+        'total_venda':   total_venda,
+        'total_lucro':   total_lucro,
+        'qtd_vendas':    len(resultados),
+    }
+    return render(request, 'veiculos/relatorio_pdf.html', context)
+
+
+# ============= EXTRATO DE VEÍCULO =============
+
+def veiculo_extrato(request, pk):
+    """Extrato imprimível de um veículo (histórico financeiro completo)"""
+    veiculo = get_object_or_404(Veiculo, pk=pk)
+    despesas = veiculo.despesas.all().select_related('tipo', 'fornecedor').order_by('data_despesa')
+
+    total_despesas = veiculo.total_despesas()
+    custo_total = veiculo.valor_compra + total_despesas
+
+    venda = None
+    lucro = None
+    if veiculo.status == 'vendido' and hasattr(veiculo, 'venda'):
+        venda = veiculo.venda
+        lucro = venda.valor_venda - custo_total
+
+    context = {
+        'veiculo': veiculo,
+        'despesas': despesas,
+        'total_despesas': total_despesas,
+        'custo_total': custo_total,
+        'venda': venda,
+        'lucro': lucro,
+    }
+    return render(request, 'veiculos/veiculo_extrato.html', context)
+
+
 # ============= CONFIGURAÇÕES =============
 
 def tipo_despesa_lista(request):

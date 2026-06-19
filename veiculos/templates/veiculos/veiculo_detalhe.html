@@ -4,109 +4,170 @@
 {% block title %}{{ veiculo }} - Gestão de Veículos{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">{{ veiculo }}</h1>
-            <p class="text-gray-600 mt-2">Detalhes do veículo</p>
+
+<!-- Cabeçalho -->
+<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+    <div>
+        <div class="flex items-center gap-3 mb-1">
+            <h1 class="text-2xl font-bold text-slate-900">{{ veiculo.marca }} {{ veiculo.modelo }}</h1>
+            <span class="px-3 py-1 rounded-full text-xs font-bold
+                {% if veiculo.status == 'disponivel' %}bg-emerald-100 text-emerald-800
+                {% elif veiculo.status == 'vendido' %}bg-blue-100 text-blue-800
+                {% else %}bg-amber-100 text-amber-800{% endif %}">
+                {{ veiculo.get_status_display }}
+            </span>
         </div>
-        <div class="space-x-2">
-            <a href="{% url 'veiculo_editar' veiculo.pk %}" class="btn-primary">Editar</a>
-            {% if veiculo.status == 'disponivel' %}
-            <a href="{% url 'venda_nova' veiculo.pk %}" class="btn-success">Vender</a>
-            {% endif %}
-            <a href="{% url 'veiculo_lista' %}" class="btn-secondary">Voltar</a>
-        </div>
+        <p class="text-slate-500 text-sm">{{ veiculo.ano }} &middot; {{ veiculo.placa }}{% if veiculo.cor %} &middot; {{ veiculo.cor }}{% endif %}{% if veiculo.km %} &middot; {{ veiculo.km|intcomma }} km{% endif %}</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'veiculo_editar' veiculo.pk %}" class="btn-primary">
+            <i class="fas fa-pen"></i> Editar
+        </a>
+        {% if veiculo.status != 'vendido' %}
+        <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-warning">
+            <i class="fas fa-receipt"></i> + Despesa
+        </a>
+        <a href="{% url 'venda_nova' veiculo.pk %}" class="btn-success">
+            <i class="fas fa-handshake"></i> Vender
+        </a>
+        {% endif %}
+        <a href="{% url 'veiculo_extrato' veiculo.pk %}" class="btn-secondary" target="_blank">
+            <i class="fas fa-print"></i> Extrato
+        </a>
+        <a href="{% url 'veiculo_lista' %}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
     </div>
 </div>
 
-<!-- Informações do Veículo -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-    <!-- Dados Principais -->
-    <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Informações do Veículo</h2>
-        
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <p class="text-sm text-gray-600">Marca</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.marca }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Modelo</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.modelo }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Ano</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.ano }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Placa</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.placa }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Cor</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.cor|default:"Não informada" }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Quilometragem</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.km|intcomma }} km</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Chassi</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.chassi|default:"Não informado" }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Status</p>
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    {% if veiculo.status == 'disponivel' %}bg-green-100 text-green-800
-                    {% elif veiculo.status == 'vendido' %}bg-blue-100 text-blue-800
-                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                    {{ veiculo.get_status_display }}
-                </span>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Fornecedor</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.fornecedor|default:"Não informado" }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Data de Compra</p>
-                <p class="text-base font-medium text-gray-900">{{ veiculo.data_compra|date:"d/m/Y" }}</p>
-            </div>
-        </div>
+<!-- Imagem principal (se houver) -->
+{% with img=veiculo.imagem_principal %}
+{% if img %}
+<div class="mb-6">
+    <img src="{{ img.imagem.url }}" alt="{{ veiculo }}" class="w-full max-h-72 object-cover rounded-2xl border border-slate-200 shadow-sm">
+</div>
+{% endif %}
+{% endwith %}
 
-        {% if veiculo.observacoes %}
-        <div class="mt-4 pt-4 border-t border-gray-200">
-            <p class="text-sm text-gray-600">Observações</p>
-            <p class="text-base text-gray-900 mt-1">{{ veiculo.observacoes }}</p>
+<!-- Grid principal -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+
+    <!-- Informações do Veículo -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                <i class="fas fa-car text-blue-600 text-xs"></i>
+            </div>
+            <h2 class="font-semibold text-slate-900">Informações do Veículo</h2>
         </div>
-        {% endif %}
+        <div class="p-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+                {% if veiculo.categoria %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Categoria</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.get_categoria_display }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.combustivel %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Combustível</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.get_combustivel_display }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.cambio %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Câmbio</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.get_cambio_display }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.motor %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Motor</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.motor }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.portas %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Portas</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.portas }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.cor_interior %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cor Interior</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.cor_interior }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.renavam %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">RENAVAM</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.renavam }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.chassi %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Chassi</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5 break-all">{{ veiculo.chassi }}</p>
+                </div>
+                {% endif %}
+                {% if veiculo.numero_proprietarios %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Proprietários Ant.</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.numero_proprietarios }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Data de Compra</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.data_compra|date:"d/m/Y" }}</p>
+                </div>
+                {% if veiculo.fornecedor %}
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Fornecedor</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ veiculo.fornecedor }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if veiculo.observacoes %}
+            <div class="mt-5 pt-4 border-t border-slate-100">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Observações</p>
+                <p class="text-sm text-slate-700">{{ veiculo.observacoes }}</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Resumo Financeiro -->
-    <div class="space-y-6">
-        <!-- Valores -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Resumo Financeiro</h2>
-            
-            <div class="space-y-3">
-                <div class="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span class="text-sm text-gray-600">Valor de Compra</span>
-                    <span class="text-base font-semibold text-gray-900">R$ {{ veiculo.valor_compra|floatformat:2 }}</span>
+    <div class="space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+                    <i class="fas fa-dollar-sign text-emerald-600 text-xs"></i>
                 </div>
-                
-                <div class="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span class="text-sm text-gray-600">Valor de Venda</span>
-                    <span class="text-base font-semibold text-gray-900">R$ {{ veiculo.valor_venda|floatformat:2 }}</span>
+                <h2 class="font-semibold text-slate-900">Resumo Financeiro</h2>
+            </div>
+            <div class="p-5 space-y-3">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-500">Valor de Compra</span>
+                    <span class="font-semibold text-slate-800">R$ {{ veiculo.valor_compra|floatformat:2 }}</span>
                 </div>
-                
-                <div class="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span class="text-sm text-gray-600">Total de Despesas</span>
-                    <span class="text-base font-semibold text-red-600">R$ {{ veiculo.total_despesas|floatformat:2 }}</span>
+                {% if veiculo.fipe %}
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-500">Valor FIPE</span>
+                    <span class="font-semibold text-slate-800">R$ {{ veiculo.fipe|floatformat:2 }}</span>
                 </div>
-                
-                <div class="flex justify-between items-center pt-2">
-                    <span class="text-base font-medium text-gray-900">Lucro Previsto</span>
-                    <span class="text-lg font-bold {% if veiculo.lucro_previsto >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% endif %}
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-500">Valor de Venda</span>
+                    <span class="font-semibold text-slate-800">R$ {{ veiculo.valor_venda|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
+                    <span class="text-slate-500">Total de Despesas</span>
+                    <span class="font-semibold text-red-600">- R$ {{ veiculo.total_despesas|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between items-center pt-1">
+                    <span class="text-sm font-semibold text-slate-700">Lucro Previsto</span>
+                    <span class="text-lg font-bold {% if veiculo.lucro_previsto >= 0 %}text-emerald-700{% else %}text-red-600{% endif %}">
                         R$ {{ veiculo.lucro_previsto|floatformat:2 }}
                     </span>
                 </div>
@@ -114,73 +175,115 @@
         </div>
 
         {% if veiculo.status == 'vendido' and veiculo.lucro_real %}
-        <div class="bg-blue-50 rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-blue-900 mb-2">Veículo Vendido</h3>
+        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-5 text-white">
+            <p class="text-blue-200 text-xs font-semibold uppercase tracking-wide mb-1">Veículo Vendido</p>
+            <p class="text-sm text-blue-100 mb-3">
+                {% if veiculo.venda %}Para: <strong>{{ veiculo.venda.cliente }}</strong>{% endif %}
+            </p>
             <div class="flex justify-between items-center">
-                <span class="text-sm text-blue-800">Lucro Real</span>
-                <span class="text-xl font-bold {% if veiculo.lucro_real >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                <span class="text-sm text-blue-200">Lucro Real</span>
+                <span class="text-2xl font-bold {% if veiculo.lucro_real >= 0 %}text-emerald-300{% else %}text-red-300{% endif %}">
                     R$ {{ veiculo.lucro_real|floatformat:2 }}
                 </span>
             </div>
         </div>
         {% endif %}
+
+        <!-- Ação rápida de despesa -->
+        {% if veiculo.status != 'vendido' %}
+        <a href="{% url 'despesa_nova' veiculo.pk %}"
+           class="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:border-amber-400 transition-colors text-sm font-semibold">
+            <i class="fas fa-plus-circle"></i> Registrar Despesa
+        </a>
+        {% endif %}
     </div>
 </div>
 
 <!-- Despesas -->
-<div class="bg-white rounded-lg shadow">
-    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <h2 class="text-xl font-semibold text-gray-900">Despesas</h2>
-        {% if veiculo.status != 'vendido' %}
-        <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-primary">+ Adicionar Despesa</a>
-        {% endif %}
-    </div>
-    
-    <div class="p-6">
-        {% if despesas %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fornecedor</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
-                            {% if veiculo.status != 'vendido' %}
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for despesa in despesas %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 text-sm text-gray-900">{{ despesa.tipo.nome }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900">{{ despesa.fornecedor|default:"-" }}</td>
-                            <td class="px-4 py-3 text-sm font-semibold text-red-600">R$ {{ despesa.valor|floatformat:2 }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900">{{ despesa.data_despesa|date:"d/m/Y" }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600">{{ despesa.descricao|truncatewords:10 }}</td>
-                            {% if veiculo.status != 'vendido' %}
-                            <td class="px-4 py-3 text-right text-sm">
-                                <a href="{% url 'despesa_editar' despesa.pk %}" class="text-blue-600 hover:text-blue-900 mr-2">Editar</a>
-                                <a href="{% url 'despesa_deletar' despesa.pk %}" class="text-red-600 hover:text-red-900">Excluir</a>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+                <i class="fas fa-receipt text-amber-600 text-xs"></i>
             </div>
-        {% else %}
-            <p class="text-gray-500 text-center py-8">Nenhuma despesa registrada.</p>
+            <h2 class="font-semibold text-slate-900">Despesas</h2>
+            {% if despesas %}
+            <span class="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{{ despesas|length }}</span>
+            {% endif %}
+        </div>
+        {% if veiculo.status != 'vendido' %}
+        <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-warning">
+            <i class="fas fa-plus"></i> Adicionar Despesa
+        </a>
         {% endif %}
     </div>
+
+    {% if despesas %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-100">
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Tipo</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Fornecedor</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Data</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Descrição</th>
+                    <th class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Valor</th>
+                    {% if veiculo.status != 'vendido' %}
+                    <th class="px-5 py-3"></th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                {% for despesa in despesas %}
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-5 py-3.5">
+                        <span class="inline-flex items-center gap-1.5 font-medium text-slate-800">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            {{ despesa.tipo.nome }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3.5 text-slate-600">{{ despesa.fornecedor|default:"—" }}</td>
+                    <td class="px-5 py-3.5 text-slate-600">{{ despesa.data_despesa|date:"d/m/Y" }}</td>
+                    <td class="px-5 py-3.5 text-slate-500">{{ despesa.descricao|truncatewords:8 }}</td>
+                    <td class="px-5 py-3.5 text-right font-bold text-red-600">R$ {{ despesa.valor|floatformat:2 }}</td>
+                    {% if veiculo.status != 'vendido' %}
+                    <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                        <a href="{% url 'despesa_editar' despesa.pk %}" class="text-blue-500 hover:text-blue-700 text-xs font-semibold mr-3">Editar</a>
+                        <a href="{% url 'despesa_deletar' despesa.pk %}" class="text-red-500 hover:text-red-700 text-xs font-semibold">Excluir</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="bg-slate-50 border-t border-slate-200">
+                    <td colspan="{% if veiculo.status != 'vendido' %}4{% else %}3{% endif %}" class="px-5 py-3 text-sm font-semibold text-slate-700 text-right">Total de Despesas:</td>
+                    <td class="px-5 py-3 text-right font-bold text-red-600">R$ {{ veiculo.total_despesas|floatformat:2 }}</td>
+                    {% if veiculo.status != 'vendido' %}<td></td>{% endif %}
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-10 text-center">
+        <i class="fas fa-receipt text-slate-200 text-4xl mb-3"></i>
+        <p class="text-slate-400 text-sm">Nenhuma despesa registrada</p>
+        {% if veiculo.status != 'vendido' %}
+        <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-warning mt-4">
+            <i class="fas fa-plus"></i> Registrar Despesa
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
-<!-- Botão de Deletar -->
+<!-- Rodapé de ações perigosas -->
 {% if veiculo.status != 'vendido' %}
-<div class="mt-6">
-    <a href="{% url 'veiculo_deletar' veiculo.pk %}" class="btn-danger">Deletar Veículo</a>
+<div class="flex justify-end mt-5">
+    <a href="{% url 'veiculo_deletar' veiculo.pk %}" class="btn-danger">
+        <i class="fas fa-trash"></i> Deletar Veículo
+    </a>
 </div>
 {% endif %}
+
 {% endblock %}

@@ -3,159 +3,446 @@
 {% block title %}{{ titulo }} - Gestão de Veículos{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ titulo }}</h1>
+
+<!-- Cabeçalho da Página -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">{{ titulo }}</h1>
+        <p class="text-slate-500 text-sm mt-0.5">Preencha as informações do veículo abaixo</p>
+    </div>
+    <a href="{% if veiculo %}{% url 'veiculo_detalhe' veiculo.pk %}{% else %}{% url 'veiculo_lista' %}{% endif %}"
+       class="btn-secondary self-start sm:self-auto">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
 </div>
 
-<div class="max-w-4xl bg-white rounded-lg shadow p-4 sm:p-6">
-    <form method="post" enctype="multipart/form-data" class="space-y-6">
-        {% csrf_token %}
-        
-        <!-- Campos do Formulário -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {% for field in form %}
-            <div class="{% if field.name == 'observacoes' %}md:col-span-2{% endif %}">
-                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                    {{ field.label }}
-                    {% if field.field.required %}<span class="text-red-600">*</span>{% endif %}
+<form method="post" enctype="multipart/form-data" class="space-y-5" id="formVeiculo">
+{% csrf_token %}
+
+<!-- ===== SEÇÃO 1 — IDENTIFICAÇÃO ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-id-card text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Identificação</h2>
+            <p class="text-blue-100 text-xs">Dados básicos de identificação do veículo</p>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+            <!-- Marca -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Marca <span class="text-red-500">*</span>
                 </label>
-                
-                <!-- Campo com botão de adicionar rápido -->
-                {% if field.name == 'fornecedor' %}
-                <div class="flex gap-2">
-                    {{ field }}
-                    <button type="button" onclick="abrirModal('modalFornecedor')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex-shrink-0" title="Adicionar novo fornecedor">
-                        ➕
-                    </button>
-                </div>
-                {% else %}
-                {{ field }}
-                {% endif %}
-                
-                {% if field.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
-                {% endif %}
-                {% if field.help_text %}
-                    <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
-                {% endif %}
+                {{ form.marca }}
+                {% if form.marca.errors %}<p class="mt-1 text-xs text-red-600">{{ form.marca.errors.0 }}</p>{% endif %}
             </div>
-            {% endfor %}
+
+            <!-- Modelo -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Modelo <span class="text-red-500">*</span>
+                </label>
+                {{ form.modelo }}
+                {% if form.modelo.errors %}<p class="mt-1 text-xs text-red-600">{{ form.modelo.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Ano -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Ano <span class="text-red-500">*</span>
+                </label>
+                {{ form.ano }}
+                {% if form.ano.errors %}<p class="mt-1 text-xs text-red-600">{{ form.ano.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Placa -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Placa <span class="text-red-500">*</span>
+                </label>
+                {{ form.placa }}
+                {% if form.placa.errors %}<p class="mt-1 text-xs text-red-600">{{ form.placa.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Cor -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Cor
+                </label>
+                {{ form.cor }}
+                {% if form.cor.errors %}<p class="mt-1 text-xs text-red-600">{{ form.cor.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Categoria -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Categoria
+                </label>
+                {{ form.categoria }}
+                {% if form.categoria.errors %}<p class="mt-1 text-xs text-red-600">{{ form.categoria.errors.0 }}</p>{% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===== SEÇÃO 2 — ESPECIFICAÇÕES TÉCNICAS ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-cogs text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Especificações Técnicas</h2>
+            <p class="text-violet-100 text-xs">Motor, câmbio, combustível e demais itens</p>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+            <!-- Combustível -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Combustível
+                </label>
+                {{ form.combustivel }}
+            </div>
+
+            <!-- Câmbio -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Câmbio
+                </label>
+                {{ form.cambio }}
+            </div>
+
+            <!-- Portas -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Nº de Portas
+                </label>
+                {{ form.portas }}
+            </div>
+
+            <!-- Motor -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Motor
+                </label>
+                {{ form.motor }}
+            </div>
+
+            <!-- KM -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Quilometragem <span class="text-red-500">*</span>
+                </label>
+                {{ form.km }}
+                {% if form.km.errors %}<p class="mt-1 text-xs text-red-600">{{ form.km.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Cor Interior -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Cor Interior
+                </label>
+                {{ form.cor_interior }}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===== SEÇÃO 3 — DOCUMENTAÇÃO ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-600">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-file-alt text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Documentação</h2>
+            <p class="text-amber-100 text-xs">RENAVAM, chassi e histórico de proprietários</p>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+            <!-- RENAVAM -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    RENAVAM
+                </label>
+                {{ form.renavam }}
+                <p class="mt-1 text-xs text-slate-400">11 dígitos</p>
+                {% if form.renavam.errors %}<p class="mt-1 text-xs text-red-600">{{ form.renavam.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Chassi -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Chassi
+                </label>
+                {{ form.chassi }}
+                {% if form.chassi.errors %}<p class="mt-1 text-xs text-red-600">{{ form.chassi.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Nº Proprietários -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Nº de Proprietários Anteriores
+                </label>
+                {{ form.numero_proprietarios }}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===== SEÇÃO 4 — FINANCEIRO ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-dollar-sign text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Financeiro</h2>
+            <p class="text-emerald-100 text-xs">Valores de compra, venda, FIPE e procedência</p>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            <!-- Valor Compra -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Valor de Compra (R$) <span class="text-red-500">*</span>
+                </label>
+                {{ form.valor_compra }}
+                {% if form.valor_compra.errors %}<p class="mt-1 text-xs text-red-600">{{ form.valor_compra.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Valor Venda -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Valor de Venda (R$) <span class="text-red-500">*</span>
+                </label>
+                {{ form.valor_venda }}
+                {% if form.valor_venda.errors %}<p class="mt-1 text-xs text-red-600">{{ form.valor_venda.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- FIPE -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Valor FIPE (R$)
+                </label>
+                {{ form.fipe }}
+            </div>
+
+            <!-- Data Compra -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Data de Compra <span class="text-red-500">*</span>
+                </label>
+                {{ form.data_compra }}
+                {% if form.data_compra.errors %}<p class="mt-1 text-xs text-red-600">{{ form.data_compra.errors.0 }}</p>{% endif %}
+            </div>
+
         </div>
 
-        <!-- Upload de Imagens -->
-        <div class="border-t pt-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">📸 Imagens do Veículo</h3>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Adicionar Novas Imagens (pode selecionar múltiplas)
+        <!-- Lucro estimado (preview) -->
+        <div id="previewLucro" class="mt-5 hidden grid grid-cols-3 gap-3">
+            <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-200">
+                <p class="text-xs text-slate-500 mb-1">Compra</p>
+                <p class="text-lg font-bold text-slate-700" id="prevCompra">—</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-200">
+                <p class="text-xs text-slate-500 mb-1">Venda</p>
+                <p class="text-lg font-bold text-slate-700" id="prevVenda">—</p>
+            </div>
+            <div class="rounded-xl p-4 text-center border" id="prevLucroBox">
+                <p class="text-xs text-slate-500 mb-1">Lucro Estimado</p>
+                <p class="text-lg font-bold" id="prevLucro">—</p>
+            </div>
+        </div>
+
+        <!-- Fornecedor -->
+        <div class="mt-5">
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Fornecedor / Procedência
+            </label>
+            <div class="flex gap-2">
+                {{ form.fornecedor }}
+                <button type="button" onclick="abrirModal('modalFornecedor')"
+                    class="btn-success flex-shrink-0" title="Adicionar novo fornecedor">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== SEÇÃO 5 — STATUS ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-slate-600 to-slate-700">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-tag text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Status e Observações</h2>
+            <p class="text-slate-300 text-xs">Situação atual do veículo</p>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Status
                 </label>
-                <input 
-                    type="file" 
-                    name="imagens" 
-                    multiple 
-                    accept="image/*"
-                    class="block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                    onchange="previewImages(event)"
-                >
-                <p class="mt-1 text-sm text-gray-500">Aceita JPG, PNG, GIF. Recomendado: 1200x800px</p>
+                {{ form.status }}
             </div>
+        </div>
+        <div class="mt-5">
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Observações
+            </label>
+            {{ form.observacoes }}
+        </div>
+    </div>
+</div>
 
-            <!-- Preview de Novas Imagens -->
-            <div id="preview-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4 hidden">
-                <p class="col-span-full text-sm font-medium text-gray-700">Preview das novas imagens:</p>
-            </div>
+<!-- ===== SEÇÃO 6 — IMAGENS ===== -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-pink-600 to-rose-600">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <i class="fas fa-images text-white"></i>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white text-sm">Imagens do Veículo</h2>
+            <p class="text-pink-100 text-xs">Fotos para exibição no estoque</p>
+        </div>
+    </div>
+    <div class="p-6">
 
-            <!-- Imagens Existentes (apenas no modo edição) -->
-            {% if veiculo and imagens %}
-            <div class="border-t pt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-3">Imagens Atuais:</h4>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {% for imagem in imagens %}
-                    <div class="relative group">
-                        <img src="{{ imagem.imagem.url }}" alt="{{ imagem.descricao }}" class="w-full h-32 object-cover rounded-lg border-2 {% if imagem.principal %}border-blue-500{% else %}border-gray-200{% endif %}">
-                        
-                        {% if imagem.principal %}
-                        <div class="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                            ★ Principal
-                        </div>
+        <!-- Upload -->
+        <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('imgUpload').click()">
+            <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 mb-2"></i>
+            <p class="text-sm font-medium text-slate-600">Clique aqui ou arraste as imagens</p>
+            <p class="text-xs text-slate-400 mt-1">JPG, PNG — Recomendado: 1200×800px</p>
+            <input id="imgUpload" type="file" name="imagens" multiple accept="image/*" class="hidden" onchange="previewImages(event)">
+        </div>
+
+        <!-- Preview novas imagens -->
+        <div id="preview-container" class="mt-5 hidden">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Preview</p>
+            <div id="preview-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
+        </div>
+
+        <!-- Imagens existentes -->
+        {% if veiculo and imagens %}
+        <div class="mt-6 border-t border-slate-100 pt-5">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Imagens Atuais</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                {% for imagem in imagens %}
+                <div class="relative group rounded-xl overflow-hidden border-2 {% if imagem.principal %}border-blue-500{% else %}border-transparent{% endif %}">
+                    <img src="{{ imagem.imagem.url }}" alt="Imagem" class="w-full h-28 object-cover">
+                    {% if imagem.principal %}
+                    <span class="absolute top-1.5 left-1.5 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-md font-semibold">Principal</span>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                        {% if not imagem.principal %}
+                        <form action="{% url 'veiculo_imagem_principal' imagem.pk %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-lg w-full">Principal</button>
+                        </form>
                         {% endif %}
-
-                        <!-- Botões de Ação -->
-                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
-                            {% if not imagem.principal %}
-                            <form action="{% url 'veiculo_imagem_principal' imagem.pk %}" method="post" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">
-                                    Tornar Principal
-                                </button>
-                            </form>
-                            {% endif %}
-                            <form action="{% url 'veiculo_imagem_deletar' imagem.pk %}" method="post" class="inline" onsubmit="return confirm('Tem certeza que deseja remover esta imagem?');">
-                                {% csrf_token %}
-                                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">
-                                    Remover
-                                </button>
-                            </form>
-                        </div>
+                        <form action="{% url 'veiculo_imagem_deletar' imagem.pk %}" method="post" onsubmit="return confirm('Remover imagem?')">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-lg w-full">Remover</button>
+                        </form>
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
             </div>
-            {% endif %}
         </div>
+        {% endif %}
 
-        <!-- Botões de Ação -->
-        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-4 border-t">
-            <a href="{% if veiculo %}{% url 'veiculo_detalhe' veiculo.pk %}{% else %}{% url 'veiculo_lista' %}{% endif %}" 
-               class="btn-secondary text-center">
-                Cancelar
-            </a>
-            <button type="submit" class="btn-primary">
-                Salvar Veículo
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 
+<!-- ===== BARRA DE AÇÕES ===== -->
+<div class="flex flex-col sm:flex-row justify-end gap-3 py-2">
+    <a href="{% if veiculo %}{% url 'veiculo_detalhe' veiculo.pk %}{% else %}{% url 'veiculo_lista' %}{% endif %}"
+       class="btn-secondary justify-center">
+        <i class="fas fa-times"></i> Cancelar
+    </a>
+    <button type="submit" class="btn-primary justify-center px-8">
+        <i class="fas fa-save"></i> Salvar Veículo
+    </button>
+</div>
+
+</form>
+
+<!-- Script preview + lucro estimado -->
 <script>
 function previewImages(event) {
+    const grid = document.getElementById('preview-grid');
     const container = document.getElementById('preview-container');
     const files = event.target.files;
-    
-    if (files.length > 0) {
-        container.classList.remove('hidden');
-        
-        // NÃO remove previews anteriores - apenas adiciona novos
-        Array.from(files).forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const div = document.createElement('div');
-                div.className = 'preview-item relative';
-                
-                // Verifica se é a primeira imagem GERAL (não só deste upload)
-                const totalImagens = container.querySelectorAll('.preview-item').length;
-                const ehPrimeira = totalImagens === 0 && index === 0;
-                
-                div.innerHTML = `
-                    <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border-2 border-gray-300">
-                    ${ehPrimeira ? '<div class="absolute top-1 left-1 bg-green-500 text-white text-xs px-2 py-1 rounded">★ Será Principal</div>' : ''}
-                    <p class="text-xs text-center text-gray-500 mt-1">${file.name}</p>
-                `;
-                container.appendChild(div);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
+    if (!files.length) return;
+    container.classList.remove('hidden');
+    Array.from(files).forEach(function(file, i) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const isFirst = grid.children.length === 0 && i === 0;
+            const div = document.createElement('div');
+            div.className = 'relative rounded-xl overflow-hidden border-2 ' + (isFirst ? 'border-blue-500' : 'border-transparent');
+            div.innerHTML = '<img src="' + e.target.result + '" class="w-full h-28 object-cover">'
+                + (isFirst ? '<span class="absolute top-1.5 left-1.5 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-md font-semibold">Principal</span>' : '')
+                + '<p class="text-xs text-center text-slate-500 py-1 truncate px-1">' + file.name + '</p>';
+            grid.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
 }
+
+(function() {
+    const compra = document.querySelector('[name=valor_compra]');
+    const venda  = document.querySelector('[name=valor_venda]');
+    const box    = document.getElementById('previewLucro');
+
+    function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+    function atualizar() {
+        const c = parseFloat(compra.value) || 0;
+        const v = parseFloat(venda.value) || 0;
+        if (!c && !v) { box.classList.add('hidden'); return; }
+        box.classList.remove('hidden');
+        const lucro = v - c;
+        document.getElementById('prevCompra').textContent = fmt(c);
+        document.getElementById('prevVenda').textContent  = fmt(v);
+        document.getElementById('prevLucro').textContent  = fmt(lucro);
+        const lucroBox = document.getElementById('prevLucroBox');
+        if (lucro >= 0) {
+            lucroBox.className = 'rounded-xl p-4 text-center border bg-emerald-50 border-emerald-200';
+            document.getElementById('prevLucro').className = 'text-lg font-bold text-emerald-700';
+        } else {
+            lucroBox.className = 'rounded-xl p-4 text-center border bg-red-50 border-red-200';
+            document.getElementById('prevLucro').className = 'text-lg font-bold text-red-700';
+        }
+    }
+    compra.addEventListener('input', atualizar);
+    venda.addEventListener('input', atualizar);
+    atualizar();
+}());
 </script>
 
-<!-- Incluir modais de cadastro rápido -->
+<!-- Modais de cadastro rápido -->
 {% include 'veiculos/modals_cadastro.html' %}
 
 {% endblock %}

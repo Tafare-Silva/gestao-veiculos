@@ -1,0 +1,376 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrato — {{ veiculo.marca }} {{ veiculo.modelo }} {{ veiculo.ano }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; font-size: .875rem; }
+
+        .page { max-width: 760px; margin: 0 auto; padding: 1.25rem; }
+
+        /* ── Barra de ações (some ao imprimir) ── */
+        .action-bar {
+            display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+            background: #0f172a; border-radius: .75rem; padding: .8rem 1.2rem;
+            margin-bottom: 1.25rem;
+        }
+        .action-bar .title { color: #fff; font-weight: 700; font-size: .9rem; flex: 1; }
+        .btn-print {
+            background: #059669; color: #fff; border: none; border-radius: .5rem;
+            padding: .4rem .9rem; font-size: .78rem; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: .35rem; font-family: inherit;
+        }
+        .btn-back {
+            background: #475569; color: #fff; border: none; border-radius: .5rem;
+            padding: .4rem .9rem; font-size: .78rem; font-weight: 600;
+            display: inline-flex; align-items: center; gap: .35rem; text-decoration: none;
+        }
+
+        /* ── Cabeçalho do documento ── */
+        .doc-header {
+            background: #fff; border-radius: .75rem; border: 1px solid #e2e8f0;
+            padding: 1rem 1.25rem; margin-bottom: .9rem;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        }
+        .doc-header .brand { display: flex; align-items: center; gap: .85rem; }
+        .doc-header .brand img { height: 42px; }
+        .doc-header .brand-name { font-size: .95rem; font-weight: 700; color: #0f172a; }
+        .doc-header .brand-sub  { font-size: .75rem; color: #64748b; }
+        .doc-header .doc-meta   { text-align: right; font-size: .75rem; color: #64748b; line-height: 1.6; }
+
+        /* ── Faixa do veículo ── */
+        .vehicle-strip {
+            background: #0f172a; border-radius: .75rem; padding: .9rem 1.25rem;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            margin-bottom: .9rem; flex-wrap: wrap;
+        }
+        .vehicle-strip .vname { color: #fff; font-size: 1rem; font-weight: 700; }
+        .vehicle-strip .vsub  { color: #94a3b8; font-size: .75rem; margin-top: .2rem; }
+        .vehicle-strip .vstatus {
+            font-size: .65rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .07em; padding: .2rem .6rem; border-radius: 999px;
+        }
+        .vstatus.disponivel { background: rgba(16,185,129,.2); color: #34d399; }
+        .vstatus.vendido    { background: rgba(96,165,250,.2); color: #60a5fa; }
+        .vstatus.reservado  { background: rgba(251,191,36,.2); color: #fbbf24; }
+        .vehicle-specs { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+        .spec-tag {
+            background: rgba(255,255,255,.08); color: #cbd5e1;
+            border-radius: .35rem; padding: .18rem .5rem; font-size: .72rem;
+        }
+
+        /* ── Seções ── */
+        .section {
+            background: #fff; border-radius: .75rem; border: 1px solid #e2e8f0;
+            margin-bottom: .9rem; overflow: hidden;
+        }
+        .section-hd {
+            display: flex; align-items: center; gap: .6rem;
+            padding: .65rem 1rem; border-bottom: 1px solid #f1f5f9; background: #f8fafc;
+        }
+        .section-hd .ico {
+            width: 1.6rem; height: 1.6rem; border-radius: .35rem;
+            display: flex; align-items: center; justify-content: center; font-size: .7rem; flex-shrink: 0;
+        }
+        .section-hd h3 { font-size: .82rem; font-weight: 700; color: #334155; }
+
+        /* ── Grade de info ── */
+        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem 1rem; padding: .9rem 1rem; }
+        .info-grid.cols2 { grid-template-columns: repeat(2, 1fr); }
+        .lbl { font-size: .65rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .15rem; }
+        .val { font-size: .82rem; font-weight: 600; color: #0f172a; }
+        .val.muted { color: #64748b; font-weight: 400; }
+
+        /* ── Tabela ── */
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: .5rem .9rem; font-size: .63rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        th.r { text-align: right; }
+        td { padding: .6rem .9rem; font-size: .8rem; color: #374151; border-bottom: 1px solid #f8fafc; }
+        td.r { text-align: right; }
+        tr:last-child td { border-bottom: none; }
+        .tfoot td { background: #f8fafc; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; }
+        .empty-msg { text-align: center; padding: 1.5rem; color: #94a3b8; font-size: .8rem; }
+
+        /* ── Resumo financeiro ── */
+        .fin-card {
+            background: #fff; border-radius: .75rem; border: 1px solid #e2e8f0; overflow: hidden;
+        }
+        .fin-hd {
+            background: #1e293b; padding: .65rem 1rem;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .fin-hd h3 { color: #fff; font-size: .82rem; font-weight: 700; }
+        .fin-body { padding: .75rem 1rem; }
+        .fin-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .35rem 0; border-bottom: 1px solid #f8fafc; font-size: .82rem;
+        }
+        .fin-row:last-child { border-bottom: none; }
+        .fin-row .fl { color: #64748b; }
+        .fin-row .fv { font-weight: 600; color: #0f172a; }
+        .fin-divider { border-top: 1px solid #e2e8f0; margin: .4rem 0; }
+        .fin-total {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .55rem 0 .1rem; font-size: .88rem; font-weight: 700;
+        }
+        .fin-total .fl { color: #0f172a; }
+        .c-red   { color: #dc2626 !important; }
+        .c-blue  { color: #2563EB !important; }
+        .c-green { color: #059669 !important; }
+        .c-big   { font-size: 1.1rem !important; font-weight: 800 !important; }
+
+        /* ── Impressão ── */
+        @media print {
+            body { background: #fff; }
+            .action-bar { display: none !important; }
+            .page { padding: 0; max-width: 100%; }
+            .doc-header { border-radius: 0; border: none; border-bottom: 2px solid #1e293b; margin-bottom: .6rem; padding: .6rem 0; }
+            .vehicle-strip { border-radius: .35rem; margin-bottom: .6rem; }
+            .section, .fin-card { border-radius: .35rem; margin-bottom: .6rem; }
+            @page { margin: 1.2cm; size: A4 portrait; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Barra de ações -->
+    <div class="action-bar">
+        <span class="title"><i class="fas fa-file-invoice fa-sm"></i> Extrato do Veículo</span>
+        <button onclick="window.print()" class="btn-print"><i class="fas fa-print fa-sm"></i> Imprimir / PDF</button>
+        <a href="{% url 'veiculo_detalhe' veiculo.pk %}" class="btn-back"><i class="fas fa-arrow-left fa-sm"></i> Voltar</a>
+    </div>
+
+    <!-- Cabeçalho do documento -->
+    <div class="doc-header">
+        <div class="brand">
+            <img src="{% static 'images/logo.png' %}" alt="Logo">
+            <div>
+                <div class="brand-name">Cleiton Automóveis</div>
+                <div class="brand-sub">Extrato Financeiro do Veículo</div>
+            </div>
+        </div>
+        <div class="doc-meta">
+            Emitido em: <strong>{% now "d/m/Y H:i" %}</strong>
+        </div>
+    </div>
+
+    <!-- Faixa do veículo -->
+    <div class="vehicle-strip">
+        <div>
+            <div class="vname">{{ veiculo.marca }} {{ veiculo.modelo }} {{ veiculo.ano }}</div>
+            <div class="vsub">
+                {% if veiculo.placa %}Placa: {{ veiculo.placa }}{% endif %}
+                {% if veiculo.cor %} &middot; {{ veiculo.cor }}{% endif %}
+                {% if veiculo.km %} &middot; {{ veiculo.km|floatformat:0 }} km{% endif %}
+            </div>
+            <div class="vehicle-specs">
+                {% if veiculo.renavam %}<span class="spec-tag">RENAVAM: {{ veiculo.renavam }}</span>{% endif %}
+                {% if veiculo.chassi %}<span class="spec-tag">Chassi: {{ veiculo.chassi }}</span>{% endif %}
+                {% if veiculo.combustivel %}<span class="spec-tag">{{ veiculo.get_combustivel_display }}</span>{% endif %}
+                {% if veiculo.cambio %}<span class="spec-tag">{{ veiculo.get_cambio_display }}</span>{% endif %}
+                {% if veiculo.motor %}<span class="spec-tag">{{ veiculo.motor }}</span>{% endif %}
+            </div>
+        </div>
+        <span class="vstatus {{ veiculo.status }}">{{ veiculo.get_status_display }}</span>
+    </div>
+
+    <!-- Aquisição -->
+    <div class="section">
+        <div class="section-hd">
+            <div class="ico" style="background:#dbeafe"><i class="fas fa-shopping-cart" style="color:#2563EB"></i></div>
+            <h3>Aquisição</h3>
+        </div>
+        <div class="info-grid">
+            <div>
+                <div class="lbl">Data de Compra</div>
+                <div class="val">{{ veiculo.data_compra|date:"d/m/Y" }}</div>
+            </div>
+            <div>
+                <div class="lbl">Valor de Compra</div>
+                <div class="val c-blue">R$ {{ veiculo.valor_compra|floatformat:2 }}</div>
+            </div>
+            {% if veiculo.fipe %}
+            <div>
+                <div class="lbl">Valor FIPE</div>
+                <div class="val">R$ {{ veiculo.fipe|floatformat:2 }}</div>
+            </div>
+            {% endif %}
+            {% if veiculo.fornecedor %}
+            <div>
+                <div class="lbl">Fornecedor / Vendedor</div>
+                <div class="val">{{ veiculo.fornecedor.nome }}</div>
+            </div>
+            {% if veiculo.fornecedor.cnpj_cpf %}
+            <div>
+                <div class="lbl">CNPJ / CPF</div>
+                <div class="val muted">{{ veiculo.fornecedor.cnpj_cpf }}</div>
+            </div>
+            {% endif %}
+            {% if veiculo.fornecedor.telefone %}
+            <div>
+                <div class="lbl">Telefone</div>
+                <div class="val muted">{{ veiculo.fornecedor.telefone }}</div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div>
+                <div class="lbl">Fornecedor</div>
+                <div class="val muted">Não informado</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Despesas -->
+    <div class="section">
+        <div class="section-hd">
+            <div class="ico" style="background:#fef3c7"><i class="fas fa-receipt" style="color:#d97706"></i></div>
+            <h3>Despesas</h3>
+        </div>
+        {% if despesas %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Fornecedor</th>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th class="r">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in despesas %}
+                <tr>
+                    <td>{{ d.tipo.nome }}</td>
+                    <td style="color:#64748b">{{ d.fornecedor|default:"—" }}</td>
+                    <td style="color:#64748b">{{ d.data_despesa|date:"d/m/Y" }}</td>
+                    <td style="color:#94a3b8">{{ d.descricao|default:"—"|truncatewords:8 }}</td>
+                    <td class="r" style="color:#dc2626;font-weight:600">R$ {{ d.valor|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="tfoot">
+                    <td colspan="4" class="r">Total:</td>
+                    <td class="r c-red">R$ {{ total_despesas|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        {% else %}
+        <div class="empty-msg"><i class="fas fa-check-circle" style="color:#94a3b8;margin-right:.4rem"></i> Nenhuma despesa registrada</div>
+        {% endif %}
+    </div>
+
+    <!-- Venda -->
+    {% if venda %}
+    <div class="section">
+        <div class="section-hd">
+            <div class="ico" style="background:#d1fae5"><i class="fas fa-handshake" style="color:#059669"></i></div>
+            <h3>Venda</h3>
+        </div>
+        <div class="info-grid">
+            <div>
+                <div class="lbl">Data da Venda</div>
+                <div class="val">{{ venda.data_venda|date:"d/m/Y" }}</div>
+            </div>
+            <div>
+                <div class="lbl">Valor de Venda</div>
+                <div class="val c-green">R$ {{ venda.valor_venda|floatformat:2 }}</div>
+            </div>
+            {% if venda.forma_pagamento %}
+            <div>
+                <div class="lbl">Forma de Pagamento</div>
+                <div class="val muted">{{ venda.forma_pagamento.nome }}</div>
+            </div>
+            {% endif %}
+            <div>
+                <div class="lbl">Cliente / Comprador</div>
+                <div class="val">{{ venda.cliente.nome }}</div>
+            </div>
+            {% if venda.cliente.cpf %}
+            <div>
+                <div class="lbl">CPF</div>
+                <div class="val muted">{{ venda.cliente.cpf }}</div>
+            </div>
+            {% endif %}
+            {% if venda.cliente.telefone %}
+            <div>
+                <div class="lbl">Telefone</div>
+                <div class="val muted">{{ venda.cliente.telefone }}</div>
+            </div>
+            {% endif %}
+            {% if venda.veiculo_entrada %}
+            <div>
+                <div class="lbl">Veículo de Entrada (Troca)</div>
+                <div class="val muted">{{ venda.veiculo_entrada.marca }} {{ venda.veiculo_entrada.modelo }}{% if venda.valor_entrada %} — R$ {{ venda.valor_entrada|floatformat:2 }}{% endif %}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% if venda.observacoes %}
+        <div style="padding: 0 1rem .85rem; border-top: 1px solid #f1f5f9; padding-top: .7rem; margin-top: -.1rem">
+            <div class="lbl">Observações</div>
+            <div style="font-size:.8rem;color:#64748b;margin-top:.2rem">{{ venda.observacoes }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Resumo Financeiro -->
+    <div class="fin-card">
+        <div class="fin-hd">
+            <i class="fas fa-calculator fa-sm" style="color:#94a3b8"></i>
+            <h3>Resumo Financeiro</h3>
+        </div>
+        <div class="fin-body">
+            <div class="fin-row">
+                <span class="fl">Valor de Compra</span>
+                <span class="fv">R$ {{ veiculo.valor_compra|floatformat:2 }}</span>
+            </div>
+            <div class="fin-row">
+                <span class="fl">Total de Despesas</span>
+                <span class="fv c-red">R$ {{ total_despesas|floatformat:2 }}</span>
+            </div>
+            <div class="fin-row" style="border-bottom:1px solid #e2e8f0; padding-bottom:.55rem; margin-bottom:.2rem">
+                <span class="fl" style="font-weight:600;color:#334155">Custo Total</span>
+                <span class="fv" style="font-weight:700">R$ {{ custo_total|floatformat:2 }}</span>
+            </div>
+            {% if venda %}
+            <div class="fin-row">
+                <span class="fl">Valor de Venda</span>
+                <span class="fv c-blue">R$ {{ venda.valor_venda|floatformat:2 }}</span>
+            </div>
+            {% if venda.veiculo_entrada and venda.valor_entrada %}
+            <div class="fin-row">
+                <span class="fl" style="font-size:.75rem;color:#94a3b8">Veículo de entrada: {{ venda.veiculo_entrada.marca }} {{ venda.veiculo_entrada.modelo }}</span>
+                <span style="font-size:.75rem;color:#64748b">R$ {{ venda.valor_entrada|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            <div class="fin-divider"></div>
+            <div class="fin-total">
+                <span class="fl">Lucro Real</span>
+                <span class="c-big {% if lucro >= 0 %}c-green{% else %}c-red{% endif %}">R$ {{ lucro|floatformat:2 }}</span>
+            </div>
+            {% else %}
+            <div class="fin-row">
+                <span class="fl">Valor de Venda Previsto</span>
+                <span class="fv c-blue">R$ {{ veiculo.valor_venda|floatformat:2 }}</span>
+            </div>
+            <div class="fin-divider"></div>
+            <div class="fin-total">
+                <span class="fl">Lucro Previsto</span>
+                <span class="c-big {% if veiculo.lucro_previsto >= 0 %}c-green{% else %}c-red{% endif %}">R$ {{ veiculo.lucro_previsto|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
