@@ -10,6 +10,7 @@ urlpatterns = [
     path('ajax/cliente/', views.cliente_ajax, name='cliente_ajax'),
     path('ajax/tipo-despesa/', views.tipo_despesa_ajax, name='tipo_despesa_ajax'),
     path('ajax/forma-pagamento/', views.forma_pagamento_ajax, name='forma_pagamento_ajax'),
+    path('ajax/veiculo/', views.veiculo_ajax, name='veiculo_ajax'),
     
     # Veículos
     path('veiculos/', views.veiculo_lista, name='veiculo_lista'),
@@ -43,6 +44,8 @@ urlpatterns = [
     path('veiculos/<int:veiculo_pk>/vender/', views.venda_nova, name='venda_nova'),
     path('vendas/', views.venda_lista, name='venda_lista'),
     path('vendas/<int:pk>/', views.venda_detalhe, name='venda_detalhe'),
+    path('vendas/<int:pk>/estornar/', views.venda_estornar, name='venda_estornar'),
+    path('veiculos/<int:pk>/recomprar/', views.veiculo_recomprar, name='veiculo_recomprar'),
     
     # Extrato por veículo
     path('veiculos/<int:pk>/extrato/', views.veiculo_extrato, name='veiculo_extrato'),
@@ -55,6 +58,10 @@ urlpatterns = [
     # Configurações
     path('tipos-despesa/', views.tipo_despesa_lista, name='tipo_despesa_lista'),
     path('tipos-despesa/novo/', views.tipo_despesa_novo, name='tipo_despesa_novo'),
+    path('tipos-despesa/<int:pk>/editar/', views.tipo_despesa_editar, name='tipo_despesa_editar'),
+    path('tipos-despesa/<int:pk>/deletar/', views.tipo_despesa_deletar, name='tipo_despesa_deletar'),
     path('formas-pagamento/', views.forma_pagamento_lista, name='forma_pagamento_lista'),
     path('formas-pagamento/nova/', views.forma_pagamento_nova, name='forma_pagamento_nova'),
+    path('formas-pagamento/<int:pk>/editar/', views.forma_pagamento_editar, name='forma_pagamento_editar'),
+    path('formas-pagamento/<int:pk>/deletar/', views.forma_pagamento_deletar, name='forma_pagamento_deletar'),
 ]

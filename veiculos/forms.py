@@ -1,7 +1,9 @@
+import json as _json
 from django import forms
+from django.forms import inlineformset_factory
 from .models import (
     Veiculo, Despesa, Cliente, Fornecedor,
-    Venda, TipoDespesa, FormaPagamento,
+    Venda, VendaPagamento, VendaVeiculoEntrada, TipoDespesa, FormaPagamento,
     COMBUSTIVEL_CHOICES, CAMBIO_CHOICES, CATEGORIA_CHOICES,
     ESTADO_CIVIL_CHOICES, UF_CHOICES,
 )
@@ -130,17 +132,19 @@ class DespesaForm(forms.ModelForm):
             'data_despesa': forms.DateInput(attrs={'class': _DATE, 'type': 'date'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fornecedor'].required = False
+        self.fields['fornecedor'].empty_label = '-- Nenhum --'
+
 
 class VendaForm(forms.ModelForm):
     class Meta:
         model = Venda
-        fields = ['cliente', 'valor_venda', 'veiculo_entrada', 'valor_entrada', 'forma_pagamento', 'data_venda', 'observacoes']
+        fields = ['cliente', 'valor_venda', 'data_venda', 'observacoes']
         widgets = {
             'cliente': forms.Select(attrs={'class': _SELECT}),
             'valor_venda': forms.NumberInput(attrs={'class': _INPUT, 'placeholder': '0,00', 'step': '0.01'}),
-            'veiculo_entrada': forms.Select(attrs={'class': _SELECT}),
-            'valor_entrada': forms.NumberInput(attrs={'class': _INPUT, 'placeholder': '0,00', 'step': '0.01'}),
-            'forma_pagamento': forms.Select(attrs={'class': _SELECT}),
             'data_venda': forms.DateInput(attrs={'class': _DATE, 'type': 'date'}),
             'observacoes': forms.Textarea(attrs={'class': _TEXTAREA, 'rows': 3, 'placeholder': 'Observações sobre a venda...'}),
         }
@@ -150,10 +154,47 @@ class VendaForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if veiculo:
             self.fields['valor_venda'].initial = veiculo.valor_venda
-        self.fields['veiculo_entrada'].queryset = Veiculo.objects.filter(
-            status='disponivel'
-        ).exclude(id=veiculo.id if veiculo else None)
-        self.fields['veiculo_entrada'].required = False
+
+
+class VeiculoTrocaForm(forms.ModelForm):
+    class Meta:
+        model = Veiculo
+        fields = ['marca', 'modelo', 'ano', 'placa', 'cor', 'valor_compra']
+        widgets = {
+            'marca': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ex: Toyota'}),
+            'modelo': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ex: Corolla'}),
+            'ano': forms.NumberInput(attrs={'class': _INPUT, 'placeholder': '2020', 'min': '1900', 'max': '2030'}),
+            'placa': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'ABC-1234', 'style': 'text-transform:uppercase'}),
+            'cor': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ex: Prata, Branco'}),
+            'valor_compra': forms.NumberInput(attrs={'class': _INPUT, 'placeholder': 'Valor de avaliação (R$)', 'step': '0.01', 'min': '0'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['placa'].required = False
+        self.fields['cor'].required = False
+
+
+VendaPagamentoFormSet = inlineformset_factory(
+    Venda, VendaPagamento,
+    fields=['forma_pagamento', 'valor', 'observacao'],
+    extra=0, can_delete=True, min_num=0, validate_min=False,
+    widgets={
+        'forma_pagamento': forms.Select(attrs={'class': _SELECT}),
+        'valor': forms.NumberInput(attrs={'class': _INPUT, 'step': '0.01', 'min': '0', 'placeholder': '0,00'}),
+        'observacao': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Observação (opcional)'}),
+    }
+)
+
+VendaVeiculoEntradaFormSet = inlineformset_factory(
+    Venda, VendaVeiculoEntrada,
+    fields=['veiculo', 'valor'],
+    extra=0, can_delete=True, min_num=0, validate_min=False,
+    widgets={
+        'veiculo': forms.Select(attrs={'class': _SELECT}),
+        'valor': forms.NumberInput(attrs={'class': _INPUT, 'step': '0.01', 'min': '0', 'placeholder': '0,00'}),
+    }
+)
 
 
 class TipoDespesaForm(forms.ModelForm):
@@ -175,3 +216,10 @@ class FormaPagamentoForm(forms.ModelForm):
             'nome': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ex: Dinheiro, PIX, Cartão'}),
             'ativo': forms.CheckboxInput(attrs={'class': _CHECKBOX}),
         }
+
+
+class EstornoVendaForm(forms.Form):
+    motivo = forms.CharField(
+        label='Motivo do estorno',
+        widget=forms.Textarea(attrs={'class': _TEXTAREA, 'rows': 3, 'placeholder': 'Ex: cliente desistiu da compra'}),
+    )

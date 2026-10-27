@@ -120,13 +120,14 @@ class Veiculo(models.Model):
         ('disponivel', 'Disponível'),
         ('vendido', 'Vendido'),
         ('manutencao', 'Em Manutenção'),
+        ('devolvido', 'Devolvido (estorno)'),
     ]
 
     # Identificação
     marca = models.CharField(max_length=100, verbose_name='Marca')
     modelo = models.CharField(max_length=100, verbose_name='Modelo')
     ano = models.IntegerField(verbose_name='Ano')
-    placa = models.CharField(max_length=10, unique=True, verbose_name='Placa')
+    placa = models.CharField(max_length=10, null=True, blank=True, verbose_name='Placa')
     cor = models.CharField(max_length=50, blank=True, verbose_name='Cor')
     categoria = models.CharField(
         max_length=30, choices=CATEGORIA_CHOICES, blank=True, verbose_name='Categoria'
@@ -184,9 +185,18 @@ class Veiculo(models.Model):
         verbose_name = 'Veículo'
         verbose_name_plural = 'Veículos'
         ordering = ['-data_cadastro']
+        constraints = [
+            # Um veículo vendido pode ser recomprado (novo registro com a mesma placa)
+            models.UniqueConstraint(
+                fields=['placa'], condition=~models.Q(status__in=['vendido', 'devolvido']),
+                name='placa_unica_em_estoque',
+                violation_error_message='Já existe um veículo em estoque com esta placa.',
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.marca} {self.modelo} - {self.ano} ({self.placa})"
+        placa = f" ({self.placa})" if self.placa else ""
+        return f"{self.marca} {self.modelo} - {self.ano}{placa}"
 
     def total_despesas(self):
         return self.despesas.aggregate(
@@ -196,13 +206,17 @@ class Veiculo(models.Model):
     def lucro_previsto(self):
         return self.valor_venda - self.valor_compra - self.total_despesas()
 
+    @property
+    def venda(self):
+        """Venda ativa (não estornada) do veículo, se estiver vendido."""
+        if self.status != 'vendido':
+            return None
+        return self.vendas.filter(estornada=False).order_by('-data_venda', '-pk').first()
+
     def lucro_real(self):
-        if self.status == 'vendido':
-            try:
-                venda = self.venda
-                return venda.valor_venda - self.valor_compra - self.total_despesas()
-            except Exception:
-                return Decimal('0.00')
+        venda = self.venda
+        if venda:
+            return venda.valor_venda - self.valor_compra - self.total_despesas()
         return None
 
     def imagem_principal(self):
@@ -267,8 +281,8 @@ class FormaPagamento(models.Model):
 
 
 class Venda(models.Model):
-    veiculo = models.OneToOneField(
-        Veiculo, on_delete=models.PROTECT, related_name='venda', verbose_name='Veículo Vendido'
+    veiculo = models.ForeignKey(
+        Veiculo, on_delete=models.PROTECT, related_name='vendas', verbose_name='Veículo Vendido'
     )
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, verbose_name='Cliente')
     valor_venda = models.DecimalField(
@@ -285,11 +299,17 @@ class Venda(models.Model):
         validators=[MinValueValidator(Decimal('0.00'))]
     )
     forma_pagamento = models.ForeignKey(
-        FormaPagamento, on_delete=models.PROTECT, verbose_name='Forma de Pagamento'
+        FormaPagamento, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='Forma de Pagamento'
     )
     observacoes = models.TextField(blank=True, verbose_name='Observações')
     data_venda = models.DateField(verbose_name='Data da Venda')
     data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name='Data de Cadastro')
+
+    # Estorno
+    estornada = models.BooleanField(default=False, verbose_name='Estornada')
+    data_estorno = models.DateTimeField(null=True, blank=True, verbose_name='Data do Estorno')
+    motivo_estorno = models.TextField(blank=True, verbose_name='Motivo do Estorno')
 
     class Meta:
         verbose_name = 'Venda'
@@ -305,8 +325,52 @@ class Venda(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.veiculo.status = 'vendido'
-        self.veiculo.save()
+        if not self.estornada and self.veiculo.status != 'vendido':
+            self.veiculo.status = 'vendido'
+            self.veiculo.save(update_fields=['status'])
+
+    def todos_veiculos_entrada(self):
+        """Veículos recebidos na troca (inclui o campo legado veiculo_entrada)."""
+        veiculos = [ve.veiculo for ve in self.veiculos_entrada.select_related('veiculo')]
+        if self.veiculo_entrada and self.veiculo_entrada not in veiculos:
+            veiculos.append(self.veiculo_entrada)
+        return veiculos
+
+
+class VendaPagamento(models.Model):
+    venda = models.ForeignKey(
+        Venda, on_delete=models.CASCADE, related_name='pagamentos', verbose_name='Venda'
+    )
+    forma_pagamento = models.ForeignKey(
+        FormaPagamento, on_delete=models.PROTECT, verbose_name='Forma de Pagamento'
+    )
+    valor = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Valor (R$)')
+    observacao = models.CharField(max_length=200, blank=True, verbose_name='Observação')
+
+    class Meta:
+        verbose_name = 'Pagamento da Venda'
+        verbose_name_plural = 'Pagamentos da Venda'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.forma_pagamento} — R$ {self.valor}"
+
+
+class VendaVeiculoEntrada(models.Model):
+    venda = models.ForeignKey(
+        Venda, on_delete=models.CASCADE, related_name='veiculos_entrada', verbose_name='Venda'
+    )
+    veiculo = models.ForeignKey(
+        Veiculo, on_delete=models.PROTECT, related_name='entradas', verbose_name='Veículo'
+    )
+    valor = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Valor de Avaliação (R$)')
+
+    class Meta:
+        verbose_name = 'Veículo de Entrada'
+        verbose_name_plural = 'Veículos de Entrada'
+
+    def __str__(self):
+        return f"{self.veiculo} — R$ {self.valor}"
 
 
 class VeiculoImagem(models.Model):

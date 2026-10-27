@@ -375,6 +375,9 @@
                     adicionarOpcao(selectId, json.id, json.nome);
                     fecharModal('modal' + formId.replace('form', ''));
                     mostrarToast(label + ' cadastrado(a) com sucesso!');
+                    document.dispatchEvent(new CustomEvent('modalItemCriado', {
+                        detail: { formId: formId, id: json.id, nome: json.nome }
+                    }));
                 } else {
                     var msgs = [];
                     if (json.errors) {

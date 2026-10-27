@@ -23,12 +23,23 @@
         <a href="{% url 'veiculo_editar' veiculo.pk %}" class="btn-primary">
             <i class="fas fa-pen"></i> Editar
         </a>
-        {% if veiculo.status != 'vendido' %}
         <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-warning">
             <i class="fas fa-receipt"></i> + Despesa
         </a>
+        {% if veiculo.status != 'vendido' %}
         <a href="{% url 'venda_nova' veiculo.pk %}" class="btn-success">
             <i class="fas fa-handshake"></i> Vender
+        </a>
+        {% else %}
+        {% if veiculo.venda %}
+        <a href="{% url 'venda_estornar' veiculo.venda.pk %}" class="btn-warning">
+            <i class="fas fa-rotate-left"></i> Estornar Venda
+        </a>
+        {% endif %}
+        {% endif %}
+        {% if veiculo.status == 'vendido' or veiculo.status == 'devolvido' %}
+        <a href="{% url 'veiculo_recomprar' veiculo.pk %}" class="btn-primary">
+            <i class="fas fa-cart-plus"></i> Recomprar
         </a>
         {% endif %}
         <a href="{% url 'veiculo_extrato' veiculo.pk %}" class="btn-secondary" target="_blank">
@@ -190,12 +201,10 @@
         {% endif %}
 
         <!-- Ação rápida de despesa -->
-        {% if veiculo.status != 'vendido' %}
         <a href="{% url 'despesa_nova' veiculo.pk %}"
            class="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:border-amber-400 transition-colors text-sm font-semibold">
             <i class="fas fa-plus-circle"></i> Registrar Despesa
         </a>
-        {% endif %}
     </div>
 </div>
 
@@ -211,11 +220,9 @@
             <span class="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{{ despesas|length }}</span>
             {% endif %}
         </div>
-        {% if veiculo.status != 'vendido' %}
         <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-warning">
             <i class="fas fa-plus"></i> Adicionar Despesa
         </a>
-        {% endif %}
     </div>
 
     {% if despesas %}
@@ -228,9 +235,7 @@
                     <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Data</th>
                     <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Descrição</th>
                     <th class="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Valor</th>
-                    {% if veiculo.status != 'vendido' %}
                     <th class="px-5 py-3"></th>
-                    {% endif %}
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">
@@ -241,25 +246,26 @@
                             <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                             {{ despesa.tipo.nome }}
                         </span>
+                        {% if venda_atual and despesa.data_despesa > venda_atual.data_venda %}
+                        <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Pós-venda</span>
+                        {% endif %}
                     </td>
                     <td class="px-5 py-3.5 text-slate-600">{{ despesa.fornecedor|default:"—" }}</td>
                     <td class="px-5 py-3.5 text-slate-600">{{ despesa.data_despesa|date:"d/m/Y" }}</td>
                     <td class="px-5 py-3.5 text-slate-500">{{ despesa.descricao|truncatewords:8 }}</td>
                     <td class="px-5 py-3.5 text-right font-bold text-red-600">R$ {{ despesa.valor|floatformat:2 }}</td>
-                    {% if veiculo.status != 'vendido' %}
                     <td class="px-5 py-3.5 text-right whitespace-nowrap">
                         <a href="{% url 'despesa_editar' despesa.pk %}" class="text-blue-500 hover:text-blue-700 text-xs font-semibold mr-3">Editar</a>
                         <a href="{% url 'despesa_deletar' despesa.pk %}" class="text-red-500 hover:text-red-700 text-xs font-semibold">Excluir</a>
                     </td>
-                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
             <tfoot>
                 <tr class="bg-slate-50 border-t border-slate-200">
-                    <td colspan="{% if veiculo.status != 'vendido' %}4{% else %}3{% endif %}" class="px-5 py-3 text-sm font-semibold text-slate-700 text-right">Total de Despesas:</td>
+                    <td colspan="4" class="px-5 py-3 text-sm font-semibold text-slate-700 text-right">Total de Despesas:</td>
                     <td class="px-5 py-3 text-right font-bold text-red-600">R$ {{ veiculo.total_despesas|floatformat:2 }}</td>
-                    {% if veiculo.status != 'vendido' %}<td></td>{% endif %}
+                    <td></td>
                 </tr>
             </tfoot>
         </table>
@@ -268,22 +274,18 @@
     <div class="flex flex-col items-center justify-center py-10 text-center">
         <i class="fas fa-receipt text-slate-200 text-4xl mb-3"></i>
         <p class="text-slate-400 text-sm">Nenhuma despesa registrada</p>
-        {% if veiculo.status != 'vendido' %}
         <a href="{% url 'despesa_nova' veiculo.pk %}" class="btn-warning mt-4">
             <i class="fas fa-plus"></i> Registrar Despesa
         </a>
-        {% endif %}
     </div>
     {% endif %}
 </div>
 
 <!-- Rodapé de ações perigosas -->
-{% if veiculo.status != 'vendido' %}
 <div class="flex justify-end mt-5">
     <a href="{% url 'veiculo_deletar' veiculo.pk %}" class="btn-danger">
         <i class="fas fa-trash"></i> Deletar Veículo
     </a>
 </div>
-{% endif %}
 
 {% endblock %}

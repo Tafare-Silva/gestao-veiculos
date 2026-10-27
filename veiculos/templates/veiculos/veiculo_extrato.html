@@ -284,7 +284,14 @@
                 <div class="lbl">Valor de Venda</div>
                 <div class="val c-green">R$ {{ venda.valor_venda|floatformat:2 }}</div>
             </div>
-            {% if venda.forma_pagamento %}
+            {% if venda.pagamentos.all %}
+            <div style="grid-column: 1 / -1">
+                <div class="lbl">Formas de Pagamento</div>
+                {% for pag in venda.pagamentos.all %}
+                <div class="val muted" style="margin-top:.15rem">{{ pag.forma_pagamento.nome }} — R$ {{ pag.valor|floatformat:2 }}{% if pag.observacao %} ({{ pag.observacao }}){% endif %}</div>
+                {% endfor %}
+            </div>
+            {% elif venda.forma_pagamento %}
             <div>
                 <div class="lbl">Forma de Pagamento</div>
                 <div class="val muted">{{ venda.forma_pagamento.nome }}</div>
@@ -306,7 +313,17 @@
                 <div class="val muted">{{ venda.cliente.telefone }}</div>
             </div>
             {% endif %}
-            {% if venda.veiculo_entrada %}
+            {% if venda.veiculos_entrada.all %}
+            <div style="grid-column: 1 / -1">
+                <div class="lbl">Veículos de Entrada (Troca)</div>
+                {% for ve in venda.veiculos_entrada.all %}
+                <div class="val muted" style="margin-top:.15rem">
+                    <i class="fas fa-car fa-xs" style="color:#d97706;margin-right:.3rem"></i>
+                    {{ ve.veiculo }} — R$ {{ ve.valor|floatformat:2 }}
+                </div>
+                {% endfor %}
+            </div>
+            {% elif venda.veiculo_entrada %}
             <div>
                 <div class="lbl">Veículo de Entrada (Troca)</div>
                 <div class="val muted">{{ venda.veiculo_entrada.marca }} {{ venda.veiculo_entrada.modelo }}{% if venda.valor_entrada %} — R$ {{ venda.valor_entrada|floatformat:2 }}{% endif %}</div>
@@ -346,12 +363,19 @@
                 <span class="fl">Valor de Venda</span>
                 <span class="fv c-blue">R$ {{ venda.valor_venda|floatformat:2 }}</span>
             </div>
+            {% for ve in venda.veiculos_entrada.all %}
+            <div class="fin-row">
+                <span class="fl" style="font-size:.75rem;color:#94a3b8">Entrada: {{ ve.veiculo }}</span>
+                <span style="font-size:.75rem;color:#64748b">R$ {{ ve.valor|floatformat:2 }}</span>
+            </div>
+            {% empty %}
             {% if venda.veiculo_entrada and venda.valor_entrada %}
             <div class="fin-row">
                 <span class="fl" style="font-size:.75rem;color:#94a3b8">Veículo de entrada: {{ venda.veiculo_entrada.marca }} {{ venda.veiculo_entrada.modelo }}</span>
                 <span style="font-size:.75rem;color:#64748b">R$ {{ venda.valor_entrada|floatformat:2 }}</span>
             </div>
             {% endif %}
+            {% endfor %}
             <div class="fin-divider"></div>
             <div class="fin-total">
                 <span class="fl">Lucro Real</span>

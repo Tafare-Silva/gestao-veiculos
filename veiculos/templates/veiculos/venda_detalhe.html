@@ -1,9 +1,25 @@
 {% extends 'veiculos/base.html' %}
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-3xl font-bold">Detalhes da Venda</h1>
-    <a href="{% url 'venda_lista' %}" class="text-blue-600 hover:underline mt-2 inline-block">← Voltar para lista</a>
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold">Detalhes da Venda
+            {% if venda.estornada %}<span class="ml-2 align-middle px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">Estornada</span>{% endif %}
+        </h1>
+        <a href="{% url 'venda_lista' %}" class="text-blue-600 hover:underline mt-2 inline-block">← Voltar para lista</a>
+    </div>
+    {% if not venda.estornada %}
+    <a href="{% url 'venda_estornar' venda.pk %}" class="btn-warning">
+        <i class="fas fa-rotate-left"></i> Estornar Venda
+    </a>
+    {% endif %}
 </div>
+
+{% if venda.estornada %}
+<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+    <p><strong>Venda estornada em {{ venda.data_estorno|date:"d/m/Y H:i" }}.</strong></p>
+    {% if venda.motivo_estorno %}<p class="mt-1">Motivo: {{ venda.motivo_estorno }}</p>{% endif %}
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="bg-white rounded-lg shadow p-6">
@@ -11,7 +27,24 @@
         <div class="space-y-3">
             <div><span class="text-gray-600">Data:</span> <span class="font-medium">{{ venda.data_venda|date:"d/m/Y" }}</span></div>
             <div><span class="text-gray-600">Cliente:</span> <span class="font-medium">{{ venda.cliente.nome }}</span></div>
-            <div><span class="text-gray-600">Forma de Pagamento:</span> <span class="font-medium">{{ venda.forma_pagamento.nome }}</span></div>
+            <div>
+                <span class="text-gray-600">Formas de Pagamento:</span>
+                {% if venda.pagamentos.all %}
+                <ul class="mt-1 space-y-1">
+                    {% for pag in venda.pagamentos.all %}
+                    <li class="flex justify-between text-sm">
+                        <span class="font-medium">{{ pag.forma_pagamento.nome }}</span>
+                        <span class="text-green-600 font-semibold">R$ {{ pag.valor|floatformat:2 }}</span>
+                        {% if pag.observacao %}<span class="text-gray-400 text-xs ml-2">{{ pag.observacao }}</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% elif venda.forma_pagamento %}
+                <span class="font-medium">{{ venda.forma_pagamento.nome }}</span>
+                {% else %}
+                <span class="text-gray-400">—</span>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -31,20 +64,28 @@
                 <span class="text-gray-600">Valor de Venda:</span>
                 <span class="font-semibold text-green-600">R$ {{ venda.valor_venda|floatformat:2 }}</span>
             </div>
-            {% if venda.veiculo_entrada %}
+            {% if venda.veiculos_entrada.all %}
+            <div class="border-b pb-2">
+                <span class="text-gray-600 block mb-1">Veículos de Entrada (Troca):</span>
+                <ul class="space-y-1 ml-2">
+                    {% for ve in venda.veiculos_entrada.all %}
+                    <li class="flex justify-between text-sm">
+                        <span class="font-medium text-amber-700"><i class="fas fa-car mr-1"></i> {{ ve.veiculo }}</span>
+                        <span class="font-semibold text-orange-600">R$ {{ ve.valor|floatformat:2 }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% elif venda.veiculo_entrada %}
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-600">Veículo de Entrada:</span>
                 <span class="font-medium">{{ venda.veiculo_entrada }}</span>
             </div>
-            {% endif %}
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-600">Valor de Entrada:</span>
                 <span class="font-semibold text-orange-600">R$ {{ venda.valor_entrada|floatformat:2 }}</span>
             </div>
-            <div class="flex justify-between pt-2">
-                <span class="text-lg font-bold">Valor Final:</span>
-                <span class="text-xl font-bold text-blue-600">R$ {{ venda.valor_final|floatformat:2 }}</span>
-            </div>
+            {% endif %}
         </div>
     </div>
 

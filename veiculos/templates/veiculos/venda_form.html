@@ -1,5 +1,4 @@
 {% extends 'veiculos/base.html' %}
-
 {% block title %}{{ titulo }} - Gestão de Veículos{% endblock %}
 
 {% block content %}
@@ -17,7 +16,7 @@
     </a>
 </div>
 
-<!-- Cartão do veículo sendo vendido -->
+<!-- Cartão do veículo -->
 <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-5 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div class="flex items-center gap-4">
         {% with img=veiculo.imagem_principal %}
@@ -44,6 +43,12 @@
 <form method="post" class="space-y-5" id="vendaForm">
 {% csrf_token %}
 
+<!-- Management forms (hidden) -->
+<div style="display:none">
+    {{ pagamentos_fs.management_form }}
+    {{ veiculos_fs.management_form }}
+</div>
+
 <!-- ===== COMPRADOR ===== -->
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
     <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
@@ -52,10 +57,10 @@
         </div>
         <div>
             <h2 class="font-semibold text-white text-sm">Comprador</h2>
-            <p class="text-blue-100 text-xs">Dados do cliente</p>
+            <p class="text-blue-100 text-xs">Dados do cliente e da negociação</p>
         </div>
     </div>
-    <div class="p-6">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
                 Cliente <span class="text-red-500">*</span>
@@ -68,98 +73,177 @@
             </div>
             {% if form.cliente.errors %}<p class="mt-1 text-xs text-red-600">{{ form.cliente.errors.0 }}</p>{% endif %}
         </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Data da Venda <span class="text-red-500">*</span>
+            </label>
+            {{ form.data_venda }}
+            {% if form.data_venda.errors %}<p class="mt-1 text-xs text-red-600">{{ form.data_venda.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                Valor de Venda (R$) <span class="text-red-500">*</span>
+            </label>
+            {{ form.valor_venda }}
+            {% if form.valor_venda.errors %}<p class="mt-1 text-xs text-red-600">{{ form.valor_venda.errors.0 }}</p>{% endif %}
+        </div>
     </div>
 </div>
 
-<!-- ===== VALORES ===== -->
+<!-- ===== PAGAMENTOS ===== -->
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-700">
         <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-            <i class="fas fa-dollar-sign text-white"></i>
+            <i class="fas fa-credit-card text-white"></i>
         </div>
-        <div>
-            <h2 class="font-semibold text-white text-sm">Valores da Venda</h2>
-            <p class="text-emerald-100 text-xs">Valor negociado e forma de pagamento</p>
+        <div class="flex-1">
+            <h2 class="font-semibold text-white text-sm">Formas de Pagamento</h2>
+            <p class="text-violet-100 text-xs">Adicione quantas parcelas / formas precisar</p>
         </div>
+        <button type="button" onclick="abrirModal('modalFormaPagamento')"
+                class="text-xs font-semibold text-white/80 hover:text-white flex items-center gap-1 transition-colors flex-shrink-0">
+            <i class="fas fa-plus"></i> Nova Forma
+        </button>
     </div>
+
     <div class="p-6 space-y-5">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                    Valor de Venda (R$) <span class="text-red-500">*</span>
-                </label>
-                {{ form.valor_venda }}
-                {% if form.valor_venda.errors %}<p class="mt-1 text-xs text-red-600">{{ form.valor_venda.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                    Data da Venda <span class="text-red-500">*</span>
-                </label>
-                {{ form.data_venda }}
-                {% if form.data_venda.errors %}<p class="mt-1 text-xs text-red-600">{{ form.data_venda.errors.0 }}</p>{% endif %}
-            </div>
-        </div>
-
-        <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Forma de Pagamento <span class="text-red-500">*</span>
-            </label>
-            <div class="flex gap-2">
-                {{ form.forma_pagamento }}
-                <button type="button" onclick="abrirModal('modalFormaPagamento')" class="btn-success flex-shrink-0" title="Nova forma de pagamento">
-                    <i class="fas fa-plus"></i>
+        <!-- Bloco A: Adicionar pagamento em dinheiro/financiamento -->
+        <div class="bg-violet-50 rounded-xl border border-violet-200 p-4">
+            <p class="text-xs font-bold text-violet-700 uppercase tracking-wide mb-3">
+                <i class="fas fa-credit-card mr-1"></i> Pagamento (PIX, Dinheiro, Financiamento…)
+            </p>
+            <div class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-40">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Forma de Pagamento</label>
+                    <select id="sel-forma"
+                            class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                        <option value="">-- Selecione --</option>
+                    </select>
+                </div>
+                <div style="width:160px;flex-shrink:0">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Valor (R$)</label>
+                    <input type="number" id="inp-forma-valor" step="0.01" min="0" placeholder="0,00"
+                           class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <div class="flex-1 min-w-32">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Observação</label>
+                    <input type="text" id="inp-forma-obs" placeholder="Opcional"
+                           class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <button type="button" onclick="adicionarPagamento()"
+                        class="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-lg transition-colors">
+                    <i class="fas fa-plus"></i> Adicionar
                 </button>
             </div>
         </div>
 
-        <!-- Resumo em tempo real -->
-        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2" id="resumoVenda">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Resumo Financeiro</p>
-            <div class="flex justify-between text-sm">
-                <span class="text-slate-600">Valor de compra do veículo</span>
-                <span class="font-semibold text-slate-700">R$ {{ veiculo.valor_compra|floatformat:2 }}</span>
+        <!-- Bloco B: Adicionar veículo de entrada -->
+        <div class="bg-amber-50 rounded-xl border border-amber-200 p-4">
+            <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">
+                <i class="fas fa-car mr-1"></i> Veículo como Parte do Pagamento (Troca)
+            </p>
+            <div class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-40">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Veículo</label>
+                    <div class="flex gap-2">
+                        <select id="sel-veiculo"
+                                class="block flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                            <option value="">-- Selecione --</option>
+                        </select>
+                        <button type="button" onclick="abrirModalVeiculoTroca()"
+                                class="flex-shrink-0 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors whitespace-nowrap">
+                            <i class="fas fa-plus"></i> Cadastrar
+                        </button>
+                    </div>
+                </div>
+                <div style="width:160px;flex-shrink:0">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Valor de Avaliação (R$)</label>
+                    <input type="number" id="inp-veiculo-valor" step="0.01" min="0" placeholder="0,00"
+                           class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <button type="button" onclick="adicionarVeiculo()"
+                        class="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-lg transition-colors">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
             </div>
-            <div class="flex justify-between text-sm">
-                <span class="text-slate-600">Total de despesas</span>
-                <span class="font-semibold text-red-600">- R$ {{ veiculo.total_despesas|floatformat:2 }}</span>
+            <p class="mt-2 text-xs text-amber-600">O valor é preenchido automaticamente ao selecionar o veículo — pode editar</p>
+        </div>
+
+        <!-- Mensagem de erro de validação -->
+        <div id="pag-erro" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+            <i class="fas fa-exclamation-circle mr-1"></i> <span id="pag-erro-txt"></span>
+        </div>
+
+        <!-- Grid de itens adicionados -->
+        <div id="itens-lista" class="space-y-2">
+            <!-- preenchido pelo JS -->
+        </div>
+
+        <!-- Estado vazio -->
+        <div id="itens-vazio" class="text-center py-6 text-slate-400 text-sm">
+            <i class="fas fa-hand-pointer text-2xl mb-2 block text-slate-300"></i>
+            Nenhum pagamento adicionado ainda
+        </div>
+
+        <!-- ══ Painel de cobertura ══ -->
+        <div class="bg-slate-900 rounded-2xl p-5">
+            <div class="flex justify-between items-baseline mb-2">
+                <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Valor total da venda</span>
+                <span class="text-white font-bold text-xl" id="cob-total">—</span>
             </div>
-            <div class="flex justify-between text-sm" id="linhaEntrada" style="display:none!important">
-                <span class="text-slate-600">Veículo de entrada <span class="text-xs text-slate-400">(forma de pagamento)</span></span>
-                <span class="font-semibold text-slate-700" id="valorEntradaDisplay">R$ 0,00</span>
+            <div class="h-2.5 bg-slate-700 rounded-full overflow-hidden mb-4">
+                <div id="cob-bar" class="h-2.5 rounded-full bg-violet-500 transition-all duration-500" style="width:0%"></div>
             </div>
-            <div class="border-t border-slate-200 pt-2 flex justify-between items-center">
-                <span class="text-sm font-bold text-slate-700">Valor de Venda</span>
-                <span class="text-lg font-bold text-slate-900" id="displayVenda">R$ {{ veiculo.valor_venda|floatformat:2 }}</span>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-slate-800 rounded-xl p-3">
+                    <div class="text-slate-400 text-xs mb-0.5">Pagamentos</div>
+                    <div class="text-white font-bold text-sm" id="cob-pag">R$ 0,00</div>
+                </div>
+                <div class="bg-slate-800 rounded-xl p-3">
+                    <div class="text-slate-400 text-xs mb-0.5">Veículos de entrada</div>
+                    <div class="text-white font-bold text-sm" id="cob-troca">R$ 0,00</div>
+                </div>
             </div>
-            <div class="border-t border-slate-200 pt-2 flex justify-between items-center">
-                <span class="text-sm font-bold text-slate-700">Lucro Estimado</span>
-                <span class="text-lg font-bold" id="displayLucro">—</span>
+            <div class="border-t border-slate-700 pt-4 flex justify-between items-center">
+                <div>
+                    <div class="text-slate-400 text-xs uppercase tracking-wide font-semibold" id="cob-label">Ainda falta</div>
+                    <div class="font-bold text-2xl mt-0.5 text-red-400" id="cob-restante">—</div>
+                </div>
+                <div id="cob-badge" class="text-xs font-bold px-4 py-2 rounded-xl bg-slate-700 text-slate-400"></div>
             </div>
         </div>
 
     </div>
 </div>
 
-<!-- ===== TROCA (ENTRADA) ===== -->
+<!-- ===== RESUMO FINANCEIRO ===== -->
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-700">
+    <div class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700">
         <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-            <i class="fas fa-exchange-alt text-white"></i>
+            <i class="fas fa-chart-line text-white"></i>
         </div>
         <div>
-            <h2 class="font-semibold text-white text-sm">Veículo de Entrada (Troca)</h2>
-            <p class="text-violet-100 text-xs">Opcional — preencha se o cliente entrar com um veículo</p>
+            <h2 class="font-semibold text-white text-sm">Resumo Financeiro</h2>
+            <p class="text-emerald-100 text-xs">Projeção de lucro com esta venda</p>
         </div>
     </div>
-    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Veículo dado como Entrada</label>
-            {{ form.veiculo_entrada }}
+    <div class="p-6 space-y-2.5">
+        <div class="flex justify-between text-sm">
+            <span class="text-slate-600">Valor de compra do veículo</span>
+            <span class="font-semibold text-slate-700">R$ {{ veiculo.valor_compra|floatformat:2 }}</span>
         </div>
-        <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Valor do Veículo de Entrada (R$)</label>
-            {{ form.valor_entrada }}
+        <div class="flex justify-between text-sm">
+            <span class="text-slate-600">Total de despesas</span>
+            <span class="font-semibold text-red-600">- R$ {{ veiculo.total_despesas|floatformat:2 }}</span>
+        </div>
+        <div class="border-t border-slate-200 pt-2.5 flex justify-between items-center">
+            <span class="text-sm font-bold text-slate-700">Valor de Venda</span>
+            <span class="text-lg font-bold text-slate-900" id="res-venda">R$ {{ veiculo.valor_venda|floatformat:2 }}</span>
+        </div>
+        <div class="border-t border-slate-200 pt-2.5 flex justify-between items-center">
+            <span class="text-sm font-bold text-slate-700">Lucro Estimado</span>
+            <span class="text-lg font-bold text-slate-400" id="res-lucro">—</span>
         </div>
     </div>
 </div>
@@ -172,9 +256,7 @@
         </div>
         <h2 class="font-semibold text-slate-900 text-sm">Observações</h2>
     </div>
-    <div class="p-6">
-        {{ form.observacoes }}
-    </div>
+    <div class="p-6">{{ form.observacoes }}</div>
 </div>
 
 <!-- Ações -->
@@ -189,42 +271,393 @@
 
 </form>
 
+<!-- ===== Modal Cadastrar Veículo de Troca ===== -->
+<div id="modalVeiculoTroca" style="display:none"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style="max-height:92vh">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <i class="fas fa-car text-amber-700"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Cadastrar Veículo de Troca</h3>
+                    <p class="text-slate-500 text-xs">Dados do veículo dado como parte do pagamento</p>
+                </div>
+            </div>
+            <button type="button" onclick="fecharModalVeiculoTroca()"
+                    class="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="overflow-y-auto p-6 flex-1">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Marca <span class="text-red-500">*</span></label>
+                    <input type="text" id="troca_marca" placeholder="Ex: Toyota"
+                           class="block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Modelo <span class="text-red-500">*</span></label>
+                    <input type="text" id="troca_modelo" placeholder="Ex: Corolla"
+                           class="block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Ano <span class="text-red-500">*</span></label>
+                    <input type="number" id="troca_ano" placeholder="2020" min="1900" max="2030"
+                           class="block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Valor de Avaliação (R$) <span class="text-red-500">*</span></label>
+                    <input type="number" id="troca_valor" placeholder="0,00" step="0.01" min="0"
+                           class="block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Placa</label>
+                    <input type="text" id="troca_placa" placeholder="ABC-1234" style="text-transform:uppercase"
+                           class="block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Cor</label>
+                    <input type="text" id="troca_cor" placeholder="Ex: Prata"
+                           class="block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                </div>
+            </div>
+            <div id="troca-error" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"></div>
+        </div>
+        <div class="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
+            <button type="button" onclick="fecharModalVeiculoTroca()" class="btn-secondary">Cancelar</button>
+            <button type="button" id="btnSalvarTroca" onclick="salvarVeiculoTroca()" class="btn-warning">
+                <i class="fas fa-save mr-1"></i> Salvar Veículo
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 (function () {
-    var custoBase = {{ veiculo.valor_compra|floatformat:2 }} + {{ veiculo.total_despesas|floatformat:2 }};
-    var vendaInput   = document.querySelector('[name=valor_venda]');
-    var entradaInput = document.querySelector('[name=valor_entrada]');
+    /* ─── Dados ─────────────────────────────────────── */
+    var custoBase     = {{ custo_base_json }};
+    var formasPag     = {{ formas_json|safe }};  /* [{id, nome}] */
+    var veiculosDisp  = {{ veiculos_json|safe }}; /* [{id, nome, valor}] */
 
+    var pagamentos    = [];  /* [{forma_id, forma_nome, valor, obs}] */
+    var veicEntrada   = [];  /* [{veiculo_id, veiculo_nome, valor}] */
+
+    var vendaInput = document.querySelector('[name=valor_venda]');
+
+    /* ─── Formatar moeda ─────────────────────────────── */
     function fmt(v) {
-        return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return 'R$ ' + Math.abs(v).toFixed(2)
+            .replace('.', ',')
+            .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
 
-    function atualizar() {
-        var venda   = parseFloat(vendaInput.value)   || 0;
-        var entrada = parseFloat(entradaInput.value) || 0;
-        var lucro   = venda - custoBase;
+    /* ─── Popular selects com JSON ───────────────────── */
+    var selForma = document.getElementById('sel-forma');
+    formasPag.forEach(function (f) { selForma.add(new Option(f.nome, f.id)); });
 
-        document.getElementById('displayVenda').textContent = fmt(venda);
-        document.getElementById('displayLucro').textContent = fmt(lucro);
+    var selVeiculo = document.getElementById('sel-veiculo');
+    function popularSelectVeiculos() {
+        while (selVeiculo.options.length > 1) selVeiculo.remove(1);
+        veiculosDisp.forEach(function (v) { selVeiculo.add(new Option(v.nome, v.id)); });
+    }
+    popularSelectVeiculos();
 
-        var lucroEl = document.getElementById('displayLucro');
-        lucroEl.className = 'text-lg font-bold ' + (lucro >= 0 ? 'text-emerald-700' : 'text-red-600');
+    /* Ao selecionar veículo → auto-preenche valor */
+    selVeiculo.addEventListener('change', function () {
+        var id  = parseInt(this.value);
+        var obj = veiculosDisp.find(function (v) { return v.id === id; });
+        document.getElementById('inp-veiculo-valor').value = (obj && obj.valor > 0)
+            ? obj.valor.toFixed(2) : '';
+    });
 
-        var linhaEntrada = document.getElementById('linhaEntrada');
-        if (entrada > 0) {
-            linhaEntrada.style.removeProperty('display');
-            document.getElementById('valorEntradaDisplay').textContent = fmt(entrada);
+    /* ─── Adicionar pagamento ────────────────────────── */
+    window.adicionarPagamento = function () {
+        var formaId   = selForma.value;
+        var formaNome = selForma.options[selForma.selectedIndex].text;
+        var valor     = parseFloat(document.getElementById('inp-forma-valor').value);
+        var obs       = document.getElementById('inp-forma-obs').value.trim();
+
+        if (!formaId) { mostrarErroPag('Selecione a forma de pagamento.'); return; }
+        if (!valor || valor <= 0) { mostrarErroPag('Informe um valor válido.'); return; }
+
+        pagamentos.push({ forma_id: formaId, forma_nome: formaNome, valor: valor, obs: obs });
+        selForma.value = '';
+        document.getElementById('inp-forma-valor').value = '';
+        document.getElementById('inp-forma-obs').value = '';
+        esconderErroPag();
+        renderLista();
+        atualizarCobertura();
+    };
+
+    /* ─── Adicionar veículo de entrada ──────────────── */
+    window.adicionarVeiculo = function () {
+        var veicId   = selVeiculo.value;
+        var veicNome = veicId ? selVeiculo.options[selVeiculo.selectedIndex].text : '';
+        var valor    = parseFloat(document.getElementById('inp-veiculo-valor').value);
+
+        if (!veicId) { mostrarErroPag('Selecione o veículo de entrada.'); return; }
+        if (!valor || valor <= 0) { mostrarErroPag('Informe o valor de avaliação.'); return; }
+        if (veicEntrada.some(function (v) { return v.veiculo_id == veicId; })) {
+            mostrarErroPag('Este veículo já foi adicionado.'); return;
+        }
+
+        veicEntrada.push({ veiculo_id: veicId, veiculo_nome: veicNome, valor: valor });
+        selVeiculo.value = '';
+        document.getElementById('inp-veiculo-valor').value = '';
+        esconderErroPag();
+        renderLista();
+        atualizarCobertura();
+    };
+
+    /* ─── Remover item ───────────────────────────────── */
+    window.removerItem = function (tipo, idx) {
+        if (tipo === 'pag') pagamentos.splice(idx, 1);
+        else                veicEntrada.splice(idx, 1);
+        renderLista();
+        atualizarCobertura();
+    };
+
+    /* ─── Renderizar lista ───────────────────────────── */
+    function renderLista() {
+        var lista = document.getElementById('itens-lista');
+        var vazio = document.getElementById('itens-vazio');
+        var total = pagamentos.length + veicEntrada.length;
+
+        lista.innerHTML = '';
+        if (total === 0) { vazio.style.display = ''; return; }
+        vazio.style.display = 'none';
+
+        pagamentos.forEach(function (p, i) {
+            lista.insertAdjacentHTML('beforeend',
+                '<div class="flex items-center gap-3 p-3.5 bg-violet-50 rounded-xl border border-violet-200">' +
+                '  <div class="h-8 w-8 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">' +
+                '    <i class="fas fa-credit-card text-violet-600 text-xs"></i>' +
+                '  </div>' +
+                '  <div class="flex-1 min-w-0">' +
+                '    <div class="text-sm font-semibold text-slate-900">' + escHtml(p.forma_nome) + '</div>' +
+                (p.obs ? '<div class="text-xs text-slate-500">' + escHtml(p.obs) + '</div>' : '') +
+                '  </div>' +
+                '  <div class="font-bold text-violet-700 text-sm whitespace-nowrap">' + fmt(p.valor) + '</div>' +
+                '  <button type="button" onclick="removerItem(\'pag\',' + i + ')"' +
+                '    class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-red-100 text-red-500 hover:bg-red-200 transition-colors">' +
+                '    <i class="fas fa-times text-xs"></i>' +
+                '  </button>' +
+                '</div>');
+        });
+
+        veicEntrada.forEach(function (v, i) {
+            lista.insertAdjacentHTML('beforeend',
+                '<div class="flex items-center gap-3 p-3.5 bg-amber-50 rounded-xl border border-amber-200">' +
+                '  <div class="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">' +
+                '    <i class="fas fa-car text-amber-700 text-xs"></i>' +
+                '  </div>' +
+                '  <div class="flex-1 min-w-0">' +
+                '    <div class="text-sm font-semibold text-slate-900">' + escHtml(v.veiculo_nome) + '</div>' +
+                '    <div class="text-xs text-amber-600">Veículo de entrada</div>' +
+                '  </div>' +
+                '  <div class="font-bold text-amber-700 text-sm whitespace-nowrap">' + fmt(v.valor) + '</div>' +
+                '  <button type="button" onclick="removerItem(\'veic\',' + i + ')"' +
+                '    class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-red-100 text-red-500 hover:bg-red-200 transition-colors">' +
+                '    <i class="fas fa-times text-xs"></i>' +
+                '  </button>' +
+                '</div>');
+        });
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ─── Painel de cobertura ────────────────────────── */
+    function atualizarCobertura() {
+        var total    = parseFloat(vendaInput.value) || 0;
+        var totalPag = pagamentos.reduce(function (s, p) { return s + p.valor; }, 0);
+        var totalVec = veicEntrada.reduce(function (s, v) { return s + v.valor; }, 0);
+        var coberto  = totalPag + totalVec;
+        var restante = total - coberto;
+        var pct      = total > 0 ? Math.min(100, coberto / total * 100) : 0;
+
+        document.getElementById('cob-total').textContent  = total > 0 ? fmt(total) : '—';
+        document.getElementById('cob-pag').textContent    = fmt(totalPag);
+        document.getElementById('cob-troca').textContent  = fmt(totalVec);
+
+        var bar    = document.getElementById('cob-bar');
+        var reEl   = document.getElementById('cob-restante');
+        var lblEl  = document.getElementById('cob-label');
+        var badge  = document.getElementById('cob-badge');
+        bar.style.width = pct.toFixed(1) + '%';
+
+        if (total === 0) {
+            bar.className = 'h-2.5 rounded-full bg-slate-600 transition-all duration-500';
+            reEl.textContent = '—'; reEl.className = 'font-bold text-2xl mt-0.5 text-slate-500';
+            lblEl.textContent = 'Informe o valor da venda';
+            badge.textContent = ''; badge.className = 'text-xs font-bold px-4 py-2 rounded-xl bg-slate-700 text-slate-400';
+        } else if (Math.abs(restante) < 0.01) {
+            bar.className = 'h-2.5 rounded-full bg-emerald-500 transition-all duration-500';
+            reEl.textContent = 'R$ 0,00'; reEl.className = 'font-bold text-2xl mt-0.5 text-emerald-400';
+            lblEl.textContent = 'Restante';
+            badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Totalmente coberto';
+            badge.className = 'text-xs font-bold px-4 py-2 rounded-xl bg-emerald-900/60 text-emerald-400';
+        } else if (restante < 0) {
+            bar.className = 'h-2.5 rounded-full bg-amber-500 transition-all duration-500';
+            reEl.textContent = '+ ' + fmt(Math.abs(restante)); reEl.className = 'font-bold text-2xl mt-0.5 text-amber-400';
+            lblEl.textContent = 'Excede em';
+            badge.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> Excedido';
+            badge.className = 'text-xs font-bold px-4 py-2 rounded-xl bg-amber-900/60 text-amber-400';
         } else {
-            linhaEntrada.style.setProperty('display', 'none', 'important');
+            bar.className = 'h-2.5 rounded-full bg-violet-500 transition-all duration-500';
+            reEl.textContent = fmt(restante); reEl.className = 'font-bold text-2xl mt-0.5 text-red-400';
+            lblEl.textContent = 'Ainda falta';
+            badge.textContent = Math.round(pct) + '% coberto';
+            badge.className = 'text-xs font-bold px-4 py-2 rounded-xl bg-slate-700 text-slate-300';
+        }
+
+        /* Lucro estimado */
+        var lucro = total - custoBase;
+        var lucroEl = document.getElementById('res-lucro');
+        document.getElementById('res-venda').textContent = total > 0 ? fmt(total) : '—';
+        if (total > 0) {
+            lucroEl.textContent = fmt(lucro);
+            lucroEl.className = 'text-lg font-bold ' + (lucro >= 0 ? 'text-emerald-700' : 'text-red-600');
+        } else {
+            lucroEl.textContent = '—'; lucroEl.className = 'text-lg font-bold text-slate-400';
         }
     }
 
-    vendaInput.addEventListener('input', atualizar);
-    entradaInput.addEventListener('input', atualizar);
-    atualizar();
+    vendaInput.addEventListener('input', atualizarCobertura);
+    atualizarCobertura();
+
+    /* ─── Erros ──────────────────────────────────────── */
+    function mostrarErroPag(msg) {
+        document.getElementById('pag-erro-txt').textContent = msg;
+        document.getElementById('pag-erro').classList.remove('hidden');
+    }
+    function esconderErroPag() { document.getElementById('pag-erro').classList.add('hidden'); }
+
+    /* ─── Submissão: converter arrays em formset inputs ─ */
+    function addHidden(form, name, value) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = name; inp.value = value;
+        form.appendChild(inp);
+    }
+
+    document.getElementById('vendaForm').addEventListener('submit', function (e) {
+        esconderErroPag();
+        if (pagamentos.length === 0 && veicEntrada.length === 0) {
+            e.preventDefault();
+            mostrarErroPag('Adicione pelo menos uma forma de pagamento ou veículo de entrada antes de confirmar.');
+            document.getElementById('pag-erro').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        var form = this;
+
+        /* Pagamentos */
+        document.querySelector('[name="pagamentos-TOTAL_FORMS"]').value = pagamentos.length;
+        document.querySelector('[name="pagamentos-INITIAL_FORMS"]').value = '0';
+        pagamentos.forEach(function (p, i) {
+            addHidden(form, 'pagamentos-' + i + '-id', '');
+            addHidden(form, 'pagamentos-' + i + '-forma_pagamento', p.forma_id);
+            addHidden(form, 'pagamentos-' + i + '-valor', p.valor.toFixed(2));
+            addHidden(form, 'pagamentos-' + i + '-observacao', p.obs || '');
+        });
+
+        /* Veículos de entrada */
+        document.querySelector('[name="veiculos_entrada-TOTAL_FORMS"]').value = veicEntrada.length;
+        document.querySelector('[name="veiculos_entrada-INITIAL_FORMS"]').value = '0';
+        veicEntrada.forEach(function (v, i) {
+            addHidden(form, 'veiculos_entrada-' + i + '-id', '');
+            addHidden(form, 'veiculos_entrada-' + i + '-veiculo', v.veiculo_id);
+            addHidden(form, 'veiculos_entrada-' + i + '-valor', v.valor.toFixed(2));
+        });
+    });
+
+    /* ─── Nova FormaPagamento via modal ──────────────── */
+    document.addEventListener('modalItemCriado', function (e) {
+        if (e.detail.formId !== 'formFormaPagamento') return;
+        var id = e.detail.id, nome = e.detail.nome;
+        formasPag.push({ id: id, nome: nome });
+        if (!selForma.querySelector('option[value="' + id + '"]')) {
+            selForma.add(new Option(nome, id));
+            selForma.value = id;
+        }
+    });
+
+    /* ─── Modal veículo de troca ─────────────────────── */
+    window.abrirModalVeiculoTroca = function () {
+        document.getElementById('modalVeiculoTroca').style.display = 'flex';
+        document.getElementById('troca_marca').focus();
+    };
+    window.fecharModalVeiculoTroca = function () {
+        document.getElementById('modalVeiculoTroca').style.display = 'none';
+        document.getElementById('troca-error').classList.add('hidden');
+    };
+    document.getElementById('modalVeiculoTroca').addEventListener('click', function (e) {
+        if (e.target === this) fecharModalVeiculoTroca();
+    });
+
+    window.salvarVeiculoTroca = function () {
+        var marca  = document.getElementById('troca_marca').value.trim();
+        var modelo = document.getElementById('troca_modelo').value.trim();
+        var ano    = document.getElementById('troca_ano').value.trim();
+        var valor  = document.getElementById('troca_valor').value.trim();
+        var errEl  = document.getElementById('troca-error');
+
+        if (!marca || !modelo || !ano || !valor) {
+            errEl.textContent = 'Preencha: Marca, Modelo, Ano e Valor de Avaliação.';
+            errEl.classList.remove('hidden'); return;
+        }
+
+        var btn = document.getElementById('btnSalvarTroca');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Salvando...';
+        errEl.classList.add('hidden');
+
+        var fd = new FormData();
+        fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        fd.append('marca',        marca);
+        fd.append('modelo',       modelo);
+        fd.append('ano',          ano);
+        fd.append('valor_compra', valor);
+        fd.append('placa', document.getElementById('troca_placa').value.trim());
+        fd.append('cor',   document.getElementById('troca_cor').value.trim());
+
+        fetch('{% url "veiculo_ajax" %}', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save mr-1"></i> Salvar Veículo';
+                if (json.success) {
+                    /* Adiciona ao array e ao select */
+                    veiculosDisp.push({ id: json.id, nome: json.nome, valor: json.valor });
+                    popularSelectVeiculos();
+                    selVeiculo.value = json.id;
+                    document.getElementById('inp-veiculo-valor').value =
+                        json.valor > 0 ? json.valor.toFixed(2) : '';
+                    fecharModalVeiculoTroca();
+                    ['troca_marca','troca_modelo','troca_ano','troca_placa','troca_cor','troca_valor']
+                        .forEach(function (id) { document.getElementById(id).value = ''; });
+                } else {
+                    var msgs = [];
+                    for (var k in json.errors) { msgs = msgs.concat(json.errors[k]); }
+                    errEl.textContent = msgs.join(' ');
+                    errEl.classList.remove('hidden');
+                }
+            })
+            .catch(function () {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save mr-1"></i> Salvar Veículo';
+                errEl.textContent = 'Erro de conexão. Tente novamente.';
+                errEl.classList.remove('hidden');
+            });
+    };
+
+    /* inicializar lista */
+    renderLista();
 }());
 </script>
 
 {% include 'veiculos/modals_cadastro.html' %}
-
 {% endblock %}

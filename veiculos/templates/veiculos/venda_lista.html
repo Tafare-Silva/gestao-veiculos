@@ -20,8 +20,10 @@
         </thead>
         <tbody class="divide-y divide-gray-200">
             {% for venda in vendas %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm">{{ venda.data_venda|date:"d/m/Y" }}</td>
+            <tr class="hover:bg-gray-50{% if venda.estornada %} opacity-60{% endif %}">
+                <td class="px-6 py-4 text-sm">{{ venda.data_venda|date:"d/m/Y" }}
+                    {% if venda.estornada %}<span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">Estornada</span>{% endif %}
+                </td>
                 <td class="px-6 py-4 text-sm font-medium">{{ venda.veiculo }}</td>
                 <td class="px-6 py-4 text-sm">{{ venda.cliente.nome }}</td>
                 <td class="px-6 py-4 text-sm font-semibold text-green-600">R$ {{ venda.valor_venda|floatformat:2 }}</td>

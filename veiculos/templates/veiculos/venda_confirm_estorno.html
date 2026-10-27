@@ -1,0 +1,38 @@
+{% extends 'veiculos/base.html' %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-8">
+    <h2 class="text-2xl font-bold mb-4">Estornar Venda</h2>
+    <p class="mb-2">Deseja estornar a venda de <strong>{{ venda.veiculo }}</strong> para <strong>{{ venda.cliente.nome }}</strong>
+        ({{ venda.data_venda|date:"d/m/Y" }} — R$ {{ venda.valor_venda|floatformat:2 }})?</p>
+
+    <ul class="text-sm text-gray-700 list-disc pl-5 mb-4 space-y-1">
+        <li>O veículo volta para o estoque como <strong>Disponível</strong>.</li>
+        <li>A venda fica no histórico marcada como <strong>Estornada</strong> e sai dos relatórios.</li>
+        {% if veiculos_troca %}
+        <li>Os veículos recebidos na troca serão marcados como <strong>Devolvidos</strong>:
+            <ul class="list-[circle] pl-5 mt-1">
+                {% for v in veiculos_troca %}
+                <li>{{ v }}{% if v in bloqueados %} <span class="text-red-600 font-semibold">— já foi vendido</span>{% endif %}</li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% endif %}
+    </ul>
+
+    {% if bloqueados %}
+    <p class="text-sm text-red-600 mb-6">Não é possível estornar: há veículos da troca que já foram vendidos. Estorne essas vendas primeiro.</p>
+    <a href="{% url 'venda_detalhe' venda.pk %}" class="btn-secondary">Voltar</a>
+    {% else %}
+    <form method="post">
+        {% csrf_token %}
+        <label for="{{ form.motivo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ form.motivo.label }}</label>
+        {{ form.motivo }}
+        {% for erro in form.motivo.errors %}<p class="text-sm text-red-600 mt-1">{{ erro }}</p>{% endfor %}
+        <div class="mt-6">
+            <button type="submit" class="btn-danger mr-2">Sim, estornar</button>
+            <a href="{% url 'venda_detalhe' venda.pk %}" class="btn-secondary">Cancelar</a>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

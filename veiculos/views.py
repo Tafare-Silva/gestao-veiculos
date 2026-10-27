@@ -1,16 +1,21 @@
+import json
+from datetime import date
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db import transaction, IntegrityError
 from django.db.models import Sum, Q, Count
 from django.http import JsonResponse
 from decimal import Decimal
 from .models import (
-    Veiculo, VeiculoImagem, Despesa, Cliente, Fornecedor, Venda,
-    TipoDespesa, FormaPagamento
+    Veiculo, VeiculoImagem, Despesa, Cliente, Fornecedor, Venda, VendaPagamento,
+    VendaVeiculoEntrada, TipoDespesa, FormaPagamento
 )
 from .forms import (
     VeiculoForm, DespesaForm, ClienteForm, FornecedorForm,
-    VendaForm, TipoDespesaForm, FormaPagamentoForm
+    VendaForm, VendaPagamentoFormSet, VendaVeiculoEntradaFormSet, VeiculoTrocaForm,
+    TipoDespesaForm, FormaPagamentoForm, EstornoVendaForm
 )
+from django.utils import timezone
 
 
 # ============= CADASTRO RÁPIDO VIA AJAX =============
@@ -72,6 +77,28 @@ def tipo_despesa_ajax(request):
     return JsonResponse({'success': False})
 
 
+def veiculo_ajax(request):
+    """Cadastro rápido de veículo de troca via AJAX"""
+    if request.method == 'POST':
+        form = VeiculoTrocaForm(request.POST)
+        if form.is_valid():
+            veiculo = form.save(commit=False)
+            veiculo.placa = veiculo.placa or None
+            veiculo.status = 'disponivel'
+            veiculo.km = 0
+            veiculo.data_compra = date.today()
+            veiculo.valor_venda = veiculo.valor_compra
+            veiculo.save()
+            return JsonResponse({
+                'success': True,
+                'id': veiculo.id,
+                'nome': str(veiculo),
+                'valor': float(veiculo.valor_compra or 0),
+            })
+        return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False})
+
+
 def forma_pagamento_ajax(request):
     """Cadastro rápido de forma de pagamento via AJAX"""
     if request.method == 'POST':
@@ -118,8 +145,8 @@ def dashboard(request):
         data_fim = hoje
     
     # Query base de vendas
-    vendas = Venda.objects.all()
-    
+    vendas = Venda.objects.filter(estornada=False)
+
     # Aplicar filtros de data
     if data_inicio:
         vendas = vendas.filter(data_venda__gte=data_inicio)
@@ -151,10 +178,9 @@ def dashboard(request):
     lucro_total = Decimal('0.00')
     
     for veiculo in veiculos_vendidos:
-        if hasattr(veiculo, 'venda'):
-            lucro = veiculo.lucro_real()
-            if lucro:
-                lucro_total += lucro
+        lucro = veiculo.lucro_real()
+        if lucro:
+            lucro_total += lucro
     
     # Últimas vendas (do período ou geral)
     ultimas_vendas = vendas.select_related('veiculo', 'cliente').order_by('-data_venda')[:5]
@@ -209,6 +235,7 @@ def veiculo_detalhe(request, pk):
     context = {
         'veiculo': veiculo,
         'despesas': despesas,
+        'venda_atual': veiculo.venda,
     }
     return render(request, 'veiculos/veiculo_detalhe.html', context)
 
@@ -236,6 +263,44 @@ def veiculo_novo(request):
         form = VeiculoForm()
     
     context = {'form': form, 'titulo': 'Novo Veículo'}
+    return render(request, 'veiculos/veiculo_form.html', context)
+
+
+_CAMPOS_RECOMPRA = [
+    'marca', 'modelo', 'ano', 'placa', 'cor', 'categoria', 'combustivel', 'cambio',
+    'portas', 'motor', 'km', 'cor_interior', 'renavam', 'chassi', 'numero_proprietarios',
+    'valor_venda', 'fipe',
+]
+
+
+def veiculo_recomprar(request, pk):
+    """Recompra de um veículo já vendido: cria um novo registro preservando o histórico do anterior"""
+    original = get_object_or_404(Veiculo, pk=pk)
+
+    if original.status not in ('vendido', 'devolvido'):
+        messages.error(request, 'Só é possível recomprar um veículo vendido ou devolvido.')
+        return redirect('veiculo_detalhe', pk=original.pk)
+
+    if request.method == 'POST':
+        form = VeiculoForm(request.POST, request.FILES)
+        if form.is_valid():
+            veiculo = form.save()
+            for idx, imagem in enumerate(request.FILES.getlist('imagens')):
+                VeiculoImagem.objects.create(
+                    veiculo=veiculo, imagem=imagem, principal=(idx == 0), ordem=idx
+                )
+            messages.success(request, 'Veículo recomprado e adicionado ao estoque!')
+            return redirect('veiculo_detalhe', pk=veiculo.pk)
+    else:
+        initial = {campo: getattr(original, campo) for campo in _CAMPOS_RECOMPRA}
+        initial.update({
+            'status': 'disponivel',
+            'data_compra': date.today(),
+            'observacoes': f'Recompra do veículo #{original.pk}.',
+        })
+        form = VeiculoForm(initial=initial)
+
+    context = {'form': form, 'titulo': f'Recompra — {original}'}
     return render(request, 'veiculos/veiculo_form.html', context)
 
 
@@ -492,31 +557,54 @@ def fornecedor_deletar(request, pk):
 def venda_nova(request, veiculo_pk):
     """Realizar venda de um veículo"""
     veiculo = get_object_or_404(Veiculo, pk=veiculo_pk)
-    
+
     if veiculo.status == 'vendido':
         messages.error(request, 'Este veículo já foi vendido!')
         return redirect('veiculo_detalhe', pk=veiculo.pk)
-    
+
     if request.method == 'POST':
         form = VendaForm(request.POST, veiculo=veiculo)
-        if form.is_valid():
-            venda = form.save(commit=False)
-            venda.veiculo = veiculo
-            venda.save()
-            
-            # Se houver veículo de entrada, marca ele como vendido também
-            # pois ele saiu do cliente e entrou no nosso estoque
-            if venda.veiculo_entrada:
-                veiculo_entrada = venda.veiculo_entrada
-                veiculo_entrada.status = 'disponivel'  # Fica disponível no nosso estoque
-                veiculo_entrada.save()
-            
+        pagamentos_fs = VendaPagamentoFormSet(request.POST, prefix='pagamentos')
+        veiculos_fs = VendaVeiculoEntradaFormSet(request.POST, prefix='veiculos_entrada')
+        if form.is_valid() and pagamentos_fs.is_valid() and veiculos_fs.is_valid():
+            try:
+                with transaction.atomic():
+                    venda = form.save(commit=False)
+                    venda.veiculo = veiculo
+                    venda.save()
+                    pagamentos_fs.instance = venda
+                    pagamentos_fs.save()
+                    veiculos_fs.instance = venda
+                    for ve in veiculos_fs.save():
+                        ve.veiculo.status = 'disponivel'
+                        ve.veiculo.save()
+            except IntegrityError:
+                messages.error(request, 'Não foi possível registrar a venda. Tente novamente.')
+                return redirect('veiculo_detalhe', pk=veiculo.pk)
             messages.success(request, 'Venda realizada com sucesso!')
             return redirect('venda_detalhe', pk=venda.pk)
     else:
         form = VendaForm(veiculo=veiculo)
-    
-    context = {'form': form, 'veiculo': veiculo, 'titulo': 'Nova Venda'}
+        pagamentos_fs = VendaPagamentoFormSet(prefix='pagamentos')
+        veiculos_fs = VendaVeiculoEntradaFormSet(prefix='veiculos_entrada')
+
+    # Dados para os selects JS
+    formas_list = list(FormaPagamento.objects.filter(ativo=True).values('id', 'nome'))
+    veiculos_disponiveis = Veiculo.objects.filter(status='disponivel').exclude(pk=veiculo_pk)
+    veiculos_list = [
+        {'id': v.id, 'nome': str(v), 'valor': float(v.valor_venda or v.valor_compra or 0)}
+        for v in veiculos_disponiveis
+    ]
+    context = {
+        'form': form,
+        'veiculo': veiculo,
+        'titulo': 'Nova Venda',
+        'pagamentos_fs': pagamentos_fs,
+        'veiculos_fs': veiculos_fs,
+        'formas_json': json.dumps(formas_list),
+        'veiculos_json': json.dumps(veiculos_list),
+        'custo_base_json': json.dumps(float(veiculo.valor_compra) + float(veiculo.total_despesas())),
+    }
     return render(request, 'veiculos/venda_form.html', context)
 
 
@@ -536,12 +624,56 @@ def venda_detalhe(request, pk):
     return render(request, 'veiculos/venda_detalhe.html', context)
 
 
+def venda_estornar(request, pk):
+    """Estorna uma venda: o veículo volta ao estoque e os veículos da troca são devolvidos"""
+    venda = get_object_or_404(Venda.objects.select_related('veiculo', 'cliente'), pk=pk)
+
+    if venda.estornada:
+        messages.error(request, 'Esta venda já foi estornada.')
+        return redirect('venda_detalhe', pk=venda.pk)
+
+    veiculos_troca = venda.todos_veiculos_entrada()
+    bloqueados = [v for v in veiculos_troca if v.status == 'vendido']
+
+    if request.method == 'POST':
+        form = EstornoVendaForm(request.POST)
+        if bloqueados:
+            messages.error(request, 'Há veículos desta troca que já foram vendidos. Estorne essas vendas primeiro.')
+        elif form.is_valid():
+            with transaction.atomic():
+                venda.estornada = True
+                venda.data_estorno = timezone.now()
+                venda.motivo_estorno = form.cleaned_data['motivo']
+                venda.save()
+
+                veiculo = venda.veiculo
+                veiculo.status = 'disponivel'
+                veiculo.save(update_fields=['status'])
+
+                # Veículos recebidos na troca voltam para o cliente
+                for v in veiculos_troca:
+                    v.status = 'devolvido'
+                    v.save(update_fields=['status'])
+            messages.success(request, 'Venda estornada. O veículo voltou para o estoque.')
+            return redirect('venda_detalhe', pk=venda.pk)
+    else:
+        form = EstornoVendaForm()
+
+    context = {
+        'venda': venda,
+        'form': form,
+        'veiculos_troca': veiculos_troca,
+        'bloqueados': bloqueados,
+    }
+    return render(request, 'veiculos/venda_confirm_estorno.html', context)
+
+
 # ============= RELATÓRIOS =============
 
 def relatorio_geral(request):
     """Relatório geral de vendas e despesas"""
-    vendas = Venda.objects.all().select_related('veiculo', 'cliente')
-    
+    vendas = Venda.objects.filter(estornada=False).select_related('veiculo', 'cliente')
+
     total_vendas = vendas.aggregate(
         total=Sum('valor_venda')
     )['total'] or Decimal('0.00')
@@ -583,33 +715,35 @@ def relatorio_por_veiculo(request):
     cliente_id = request.GET.get('cliente')
     
     # Query base
-    veiculos_vendidos = Veiculo.objects.filter(status='vendido').select_related('venda', 'venda__cliente', 'venda__veiculo_entrada')
-    
+    vendas = Venda.objects.filter(estornada=False, veiculo__status='vendido').select_related(
+        'veiculo', 'cliente', 'veiculo_entrada'
+    )
+
     # Aplicar filtros
     if data_inicio:
-        veiculos_vendidos = veiculos_vendidos.filter(venda__data_venda__gte=data_inicio)
+        vendas = vendas.filter(data_venda__gte=data_inicio)
     if data_fim:
-        veiculos_vendidos = veiculos_vendidos.filter(venda__data_venda__lte=data_fim)
+        vendas = vendas.filter(data_venda__lte=data_fim)
     if veiculo_id:
-        veiculos_vendidos = veiculos_vendidos.filter(id=veiculo_id)
+        vendas = vendas.filter(veiculo_id=veiculo_id)
     if cliente_id:
-        veiculos_vendidos = veiculos_vendidos.filter(venda__cliente_id=cliente_id)
-    
+        vendas = vendas.filter(cliente_id=cliente_id)
+
     resultados = []
-    for veiculo in veiculos_vendidos:
+    for venda in vendas:
+        veiculo = venda.veiculo
         despesas_list = veiculo.despesas.all().select_related('tipo', 'fornecedor')
         despesas_total = veiculo.total_despesas()
-        lucro = veiculo.lucro_real()
-        
+
         resultados.append({
             'veiculo': veiculo,
-            'venda': veiculo.venda,
+            'venda': venda,
             'valor_compra': veiculo.valor_compra,
-            'valor_venda': veiculo.venda.valor_venda if hasattr(veiculo, 'venda') else Decimal('0.00'),
+            'valor_venda': venda.valor_venda,
             'despesas': despesas_total,
             'despesas_list': despesas_list,
-            'lucro': lucro,
-            'tem_entrada': veiculo.venda.veiculo_entrada is not None if hasattr(veiculo, 'venda') else False,
+            'lucro': venda.valor_venda - veiculo.valor_compra - despesas_total,
+            'tem_entrada': bool(venda.todos_veiculos_entrada()),
         })
     
     # Listas para os filtros
@@ -635,7 +769,7 @@ def relatorio_pdf(request):
     data_inicio = request.GET.get('data_inicio')
     data_fim    = request.GET.get('data_fim')
 
-    vendas = Venda.objects.select_related(
+    vendas = Venda.objects.filter(estornada=False).select_related(
         'veiculo', 'cliente', 'forma_pagamento', 'veiculo_entrada'
     ).order_by('data_venda')
 
@@ -694,11 +828,8 @@ def veiculo_extrato(request, pk):
     total_despesas = veiculo.total_despesas()
     custo_total = veiculo.valor_compra + total_despesas
 
-    venda = None
-    lucro = None
-    if veiculo.status == 'vendido' and hasattr(veiculo, 'venda'):
-        venda = veiculo.venda
-        lucro = venda.valor_venda - custo_total
+    venda = veiculo.venda
+    lucro = venda.valor_venda - custo_total if venda else None
 
     context = {
         'veiculo': veiculo,
@@ -714,14 +845,11 @@ def veiculo_extrato(request, pk):
 # ============= CONFIGURAÇÕES =============
 
 def tipo_despesa_lista(request):
-    """Lista tipos de despesa"""
     tipos = TipoDespesa.objects.all().order_by('nome')
-    context = {'tipos': tipos}
-    return render(request, 'veiculos/tipo_despesa_lista.html', context)
+    return render(request, 'veiculos/tipo_despesa_lista.html', {'tipos': tipos})
 
 
 def tipo_despesa_novo(request):
-    """Criar novo tipo de despesa"""
     if request.method == 'POST':
         form = TipoDespesaForm(request.POST)
         if form.is_valid():
@@ -730,20 +858,40 @@ def tipo_despesa_novo(request):
             return redirect('tipo_despesa_lista')
     else:
         form = TipoDespesaForm()
-    
-    context = {'form': form, 'titulo': 'Novo Tipo de Despesa'}
-    return render(request, 'veiculos/tipo_despesa_form.html', context)
+    return render(request, 'veiculos/tipo_despesa_form.html', {'form': form, 'titulo': 'Novo Tipo de Despesa'})
+
+
+def tipo_despesa_editar(request, pk):
+    tipo = get_object_or_404(TipoDespesa, pk=pk)
+    if request.method == 'POST':
+        form = TipoDespesaForm(request.POST, instance=tipo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Tipo de despesa atualizado com sucesso!')
+            return redirect('tipo_despesa_lista')
+    else:
+        form = TipoDespesaForm(instance=tipo)
+    return render(request, 'veiculos/tipo_despesa_form.html', {'form': form, 'titulo': 'Editar Tipo de Despesa'})
+
+
+def tipo_despesa_deletar(request, pk):
+    tipo = get_object_or_404(TipoDespesa, pk=pk)
+    if request.method == 'POST':
+        try:
+            tipo.delete()
+            messages.success(request, 'Tipo de despesa excluído com sucesso!')
+        except Exception:
+            messages.error(request, 'Não é possível excluir: existem despesas vinculadas a este tipo.')
+        return redirect('tipo_despesa_lista')
+    return render(request, 'veiculos/tipo_despesa_confirm_delete.html', {'tipo': tipo})
 
 
 def forma_pagamento_lista(request):
-    """Lista formas de pagamento"""
     formas = FormaPagamento.objects.all().order_by('nome')
-    context = {'formas': formas}
-    return render(request, 'veiculos/forma_pagamento_lista.html', context)
+    return render(request, 'veiculos/forma_pagamento_lista.html', {'formas': formas})
 
 
 def forma_pagamento_nova(request):
-    """Criar nova forma de pagamento"""
     if request.method == 'POST':
         form = FormaPagamentoForm(request.POST)
         if form.is_valid():
@@ -752,6 +900,29 @@ def forma_pagamento_nova(request):
             return redirect('forma_pagamento_lista')
     else:
         form = FormaPagamentoForm()
-    
-    context = {'form': form, 'titulo': 'Nova Forma de Pagamento'}
-    return render(request, 'veiculos/forma_pagamento_form.html', context)
+    return render(request, 'veiculos/forma_pagamento_form.html', {'form': form, 'titulo': 'Nova Forma de Pagamento'})
+
+
+def forma_pagamento_editar(request, pk):
+    forma = get_object_or_404(FormaPagamento, pk=pk)
+    if request.method == 'POST':
+        form = FormaPagamentoForm(request.POST, instance=forma)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Forma de pagamento atualizada com sucesso!')
+            return redirect('forma_pagamento_lista')
+    else:
+        form = FormaPagamentoForm(instance=forma)
+    return render(request, 'veiculos/forma_pagamento_form.html', {'form': form, 'titulo': 'Editar Forma de Pagamento'})
+
+
+def forma_pagamento_deletar(request, pk):
+    forma = get_object_or_404(FormaPagamento, pk=pk)
+    if request.method == 'POST':
+        try:
+            forma.delete()
+            messages.success(request, 'Forma de pagamento excluída com sucesso!')
+        except Exception:
+            messages.error(request, 'Não é possível excluir: existem pagamentos vinculados a esta forma.')
+        return redirect('forma_pagamento_lista')
+    return render(request, 'veiculos/forma_pagamento_confirm_delete.html', {'forma': forma})
